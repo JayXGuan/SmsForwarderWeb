@@ -3,7 +3,7 @@
 import db from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 // Session 有效期：7天
 const SESSION_EXPIRY_DAYS = 7;
@@ -123,9 +123,19 @@ async function createSession(userId: number) {
 
   // 保存到 cookie
   const cookieStore = await cookies();
+
+  // 判断是否使用 HTTPS：检查 X-Forwarded-Proto 头或环境变量
+  const headersList = await headers();
+  const forwardedProto = headersList
+    .get("x-forwarded-proto")
+    ?.toLowerCase();
+  const isSecure =
+    process.env.NODE_ENV === "production" &&
+    (forwardedProto === "https" || process.env.FORCE_HTTPS === "true");
+
   cookieStore.set("session_id", sessionId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isSecure,
     sameSite: "strict",
     path: "/",
     expires: expiresAt,
