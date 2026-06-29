@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { queryConfig } from "@/actions/deviceApi";
 import type { Device } from "@/actions/devices";
@@ -16,12 +16,11 @@ export default function DeviceCard({ device, onDelete }: DeviceCardProps) {
   const [config, setConfig] = useState<ConfigQueryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const fetchConfig = async () => {
     if (loading) return;
-    setLoading(true);
-    setError(null);
     try {
+      setError(null);
+      setLoading(true);
       const result = await queryConfig(device);
       if (result.code === 200 && result.data) {
         setConfig(result.data);
@@ -35,13 +34,15 @@ export default function DeviceCard({ device, onDelete }: DeviceCardProps) {
     }
   };
 
+  // 组件加载时自动获取设备信息
+  useEffect(() => {
+    fetchConfig();
+  }, []);
+
   const handleToggle = () => {
-    const newExpanded = !expanded;
-    setExpanded(newExpanded);
-    if (newExpanded && !config && !loading) {
-      fetchConfig();
-    }
+    setExpanded(!expanded);
   };
+  console.log("config", config);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
@@ -112,6 +113,9 @@ export default function DeviceCard({ device, onDelete }: DeviceCardProps) {
       {!expanded && (
         <div className="px-5 pb-4">
           <div className="flex flex-wrap gap-2">
+            {loading && (
+              <span className="text-sm text-gray-400">加载中...</span>
+            )}
             {config?.sim_info_list &&
               Object.values(config.sim_info_list).map(
                 (sim: SimInfo, index: number) => (
@@ -124,11 +128,7 @@ export default function DeviceCard({ device, onDelete }: DeviceCardProps) {
                   </span>
                 ),
               )}
-            {!config && (
-              <span className="text-sm text-gray-400">
-                点击展开加载设备信息...
-              </span>
-            )}
+            {error && <span className="text-sm text-red-500">{error}</span>}
           </div>
         </div>
       )}

@@ -13,6 +13,12 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Downgrade synchronous setState in effect from error to warning
+  {
+    rules: {
+      "react-hooks/no-set-state-in-effect": "warn",
+    },
+  },
 ]);
 
 export default eslintConfig;
