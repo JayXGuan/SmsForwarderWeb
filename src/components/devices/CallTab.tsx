@@ -20,10 +20,10 @@ export default function CallTab({ device }: CallTabProps) {
 
   // 首次挂载时加载
   useEffect(() => {
-    loadCallList(activeType, 1, false);
+    loadCallList(activeType, 1);
   }, []);
 
-  const loadCallList = async (type: number, page: number, append: boolean) => {
+  const loadCallList = async (type: number, page: number) => {
     setLoading(true);
     const result = await queryCall(device, {
       type,
@@ -32,14 +32,9 @@ export default function CallTab({ device }: CallTabProps) {
     });
     if (result.code === 200 && result.data) {
       const newData = result.data as unknown as CallInfo[];
-      if (newData.length === 0) {
+      setCallList((prev) => [...prev, ...newData]);
+      if (newData.length < pageSize) {
         setHasMore(false);
-      } else {
-        if (append) {
-          setCallList((prev) => [...prev, ...newData]);
-        } else {
-          setCallList(newData);
-        }
       }
     }
     setLoading(false);
@@ -50,13 +45,13 @@ export default function CallTab({ device }: CallTabProps) {
     setPageNum(1);
     setHasMore(true);
     setCallList([]);
-    loadCallList(type, 1, false);
+    loadCallList(type, 1);
   };
 
   const handleLoadMore = () => {
     const nextPage = pageNum + 1;
     setPageNum(nextPage);
-    loadCallList(activeType, nextPage, true);
+    loadCallList(activeType, nextPage);
   };
 
   return (

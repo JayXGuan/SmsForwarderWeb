@@ -19,10 +19,10 @@ export default function ContactTab({ device }: ContactTabProps) {
 
   // 首次挂载时加载
   useEffect(() => {
-    loadContactList(1, false);
+    loadContactList(1);
   }, []);
 
-  const loadContactList = async (page: number, append: boolean) => {
+  const loadContactList = async (page: number) => {
     setLoading(true);
     const result = await queryContact(device, {
       page_num: page,
@@ -30,14 +30,9 @@ export default function ContactTab({ device }: ContactTabProps) {
     });
     if (result.code === 200 && result.data) {
       const newData = result.data as unknown as ContactInfo[];
-      if (newData.length === 0) {
+      setContactList((prev) => [...prev, ...newData]);
+      if (newData.length < pageSize) {
         setHasMore(false);
-      } else {
-        if (append) {
-          setContactList((prev) => [...prev, ...newData]);
-        } else {
-          setContactList(newData);
-        }
       }
     }
     setLoading(false);
@@ -46,7 +41,7 @@ export default function ContactTab({ device }: ContactTabProps) {
   const handleLoadMore = () => {
     const nextPage = pageNum + 1;
     setPageNum(nextPage);
-    loadContactList(nextPage, true);
+    loadContactList(nextPage);
   };
 
   return (

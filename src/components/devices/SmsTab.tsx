@@ -20,10 +20,10 @@ export default function SmsTab({ device }: SmsTabProps) {
 
   // 首次挂载时加载
   useEffect(() => {
-    loadSmsList(activeType, 1, false);
+    loadSmsList(activeType, 1);
   }, []);
 
-  const loadSmsList = async (type: number, page: number, append: boolean) => {
+  const loadSmsList = async (type: number, page: number) => {
     setLoading(true);
     const result = await querySms(device, {
       type,
@@ -32,14 +32,9 @@ export default function SmsTab({ device }: SmsTabProps) {
     });
     if (result.code === 200 && result.data) {
       const newData = result.data as unknown as SmsInfo[];
-      if (newData.length === 0) {
+      setSmsList((prev) => [...prev, ...newData]);
+      if (newData.length < pageSize) {
         setHasMore(false);
-      } else {
-        if (append) {
-          setSmsList((prev) => [...prev, ...newData]);
-        } else {
-          setSmsList(newData);
-        }
       }
     }
     setLoading(false);
@@ -50,13 +45,13 @@ export default function SmsTab({ device }: SmsTabProps) {
     setPageNum(1);
     setHasMore(true);
     setSmsList([]);
-    loadSmsList(type, 1, false);
+    loadSmsList(type, 1);
   };
 
   const handleLoadMore = () => {
     const nextPage = pageNum + 1;
     setPageNum(nextPage);
-    loadSmsList(activeType, nextPage, true);
+    loadSmsList(activeType, nextPage);
   };
 
   return (
