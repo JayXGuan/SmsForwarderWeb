@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "@/components/shared/Modal";
+import type { Device } from "@/actions/devices";
 
 interface AddDeviceModalProps {
   isOpen: boolean;
@@ -13,12 +14,14 @@ interface AddDeviceModalProps {
     sign_key?: string;
     security_mode?: number;
   }) => Promise<void>;
+  editDevice?: Device | null;
 }
 
 export default function AddDeviceModal({
   isOpen,
   onClose,
   onSubmit,
+  editDevice,
 }: AddDeviceModalProps) {
   const [name, setName] = useState("");
   const [ip, setIp] = useState("");
@@ -27,6 +30,25 @@ export default function AddDeviceModal({
   const [securityMode, setSecurityMode] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // 当编辑设备时，初始化表单数据
+  useEffect(() => {
+    if (editDevice) {
+      setName(editDevice.name);
+      setIp(editDevice.ip);
+      setPort(editDevice.port.toString());
+      setSignKey(editDevice.sign_key || "");
+      setSecurityMode(editDevice.security_mode);
+    } else {
+      // 新增时重置表单
+      setName("");
+      setIp("");
+      setPort("5000");
+      setSignKey("");
+      setSecurityMode(0);
+    }
+    setError("");
+  }, [editDevice, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,33 +63,35 @@ export default function AddDeviceModal({
         sign_key: signKey || undefined,
         security_mode: securityMode,
       });
-      // 重置表单
-      setName("");
-      setIp("");
-      setPort("5000");
-      setSignKey("");
-      setSecurityMode(0);
-      onClose();
+      handleClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "添加设备失败");
+      setError(err instanceof Error ? err.message : "操作失败");
     } finally {
       setLoading(false);
     }
   };
 
   const handleClose = () => {
-    setName("");
-    setIp("");
-    setPort("5000");
-    setSignKey("");
-    setSecurityMode(0);
     setError("");
     onClose();
   };
 
+  const isEditMode = !!editDevice;
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="添加设备">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={isEditMode ? "编辑设备" : "添加设备"}
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* 编辑模式下显示设备 ID */}
+        {isEditMode && (
+          <div className="bg-gray-50 px-3 py-2 rounded-lg text-sm text-gray-600">
+            设备 ID: <span className="font-medium">{editDevice.id}</span>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             设备名称 <span className="text-red-500">*</span>
@@ -159,7 +183,13 @@ export default function AddDeviceModal({
             disabled={loading}
             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "添加中..." : "添加设备"}
+            {loading
+              ? isEditMode
+                ? "保存中..."
+                : "添加中..."
+              : isEditMode
+                ? "保存"
+                : "添加设备"}
           </button>
         </div>
       </form>

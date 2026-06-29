@@ -63,6 +63,8 @@ export default function DeviceDetailPage() {
           const configResult = await queryConfig(result.data);
           if (configResult.code === 200 && configResult.data) {
             setConfig(configResult.data as unknown as ConfigQueryData);
+          } else {
+            setError(configResult.msg || "获取设备配置失败");
           }
         } else {
           setError(result.error || "获取设备信息失败");

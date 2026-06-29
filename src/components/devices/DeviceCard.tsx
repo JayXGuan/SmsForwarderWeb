@@ -8,10 +8,15 @@ import type { ConfigQueryData, SimInfo } from "@/types";
 
 interface DeviceCardProps {
   device: Device;
+  onEdit: (device: Device) => void;
   onDelete: (id: number) => void;
 }
 
-export default function DeviceCard({ device, onDelete }: DeviceCardProps) {
+export default function DeviceCard({
+  device,
+  onEdit,
+  onDelete,
+}: DeviceCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [config, setConfig] = useState<ConfigQueryData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -84,6 +89,15 @@ export default function DeviceCard({ device, onDelete }: DeviceCardProps) {
           >
             详情
           </Link>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(device);
+            }}
+            className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            编辑
+          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();

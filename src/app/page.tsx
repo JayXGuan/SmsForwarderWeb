@@ -6,6 +6,7 @@ import { isLoggedIn, logout } from "@/actions/auth";
 import {
   getDevices,
   createDevice,
+  updateDevice,
   deleteDevice,
   type Device,
 } from "@/actions/devices";
@@ -19,6 +20,7 @@ export default function HomePage() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editDevice, setEditDevice] = useState<Device | null>(null);
   const router = useRouter();
 
   // 检查登录状态
@@ -62,15 +64,33 @@ export default function HomePage() {
     sign_key?: string;
     security_mode?: number;
   }) => {
-    const result = await createDevice(deviceData);
-    if (result.success) {
-      const devicesResult = await getDevices();
-
-      if (devicesResult.success) {
-        setDevices(devicesResult.data);
+    if (editDevice) {
+      // 编辑模式
+      const result = await updateDevice(editDevice.id, deviceData);
+      if (result.success) {
+        const devicesResult = await getDevices();
+        if (devicesResult.success) {
+          setDevices(devicesResult.data);
+        }
+        setShowAddModal(false);
+        setEditDevice(null);
       }
-      setShowAddModal(false);
+    } else {
+      // 新增模式
+      const result = await createDevice(deviceData);
+      if (result.success) {
+        const devicesResult = await getDevices();
+        if (devicesResult.success) {
+          setDevices(devicesResult.data);
+        }
+        setShowAddModal(false);
+      }
     }
+  };
+
+  const handleEditDevice = (device: Device) => {
+    setEditDevice(device);
+    setShowAddModal(true);
   };
 
   const handleDeleteDevice = async (id: number) => {
@@ -206,6 +226,7 @@ export default function HomePage() {
               <DeviceCard
                 key={device.id}
                 device={device}
+                onEdit={handleEditDevice}
                 onDelete={handleDeleteDevice}
               />
             ))}
@@ -213,11 +234,15 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* 添加设备弹窗 */}
+      {/* 添加/编辑设备弹窗 */}
       <AddDeviceModal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => {
+          setShowAddModal(false);
+          setEditDevice(null);
+        }}
         onSubmit={handleAddDevice}
+        editDevice={editDevice}
       />
     </div>
   );
