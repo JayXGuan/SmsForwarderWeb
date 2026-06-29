@@ -15,6 +15,7 @@ export default function SmsTab({ smsList, onLoadSms }: SmsTabProps) {
     setActiveType(type);
     onLoadSms(type);
   };
+  console.log("SmsTab", "activeType", smsList, activeType);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -51,7 +52,10 @@ export default function SmsTab({ smsList, onLoadSms }: SmsTabProps) {
             <div key={index} className="p-4 hover:bg-gray-50">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-gray-900">
-                  {sms.name || sms.number}
+                  {sms.name || "未知联系人"}{" "}
+                  <span className="text-xs text-gray-500 font-normal">
+                    ({sms.number})
+                  </span>
                 </span>
                 <span className="text-xs text-gray-500">
                   {new Date(sms.date).toLocaleString()}
