@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { isLoggedIn } from "@/actions/auth";
-import { getDevice } from "@/actions/devices";
+import { getDevice, type Device } from "@/actions/devices";
 import {
   queryConfig,
   querySms,
@@ -26,7 +26,6 @@ import SendSmsForm from "@/components/devices/SendSmsForm";
 import AddContactForm from "@/components/devices/AddContactForm";
 import WolForm from "@/components/devices/WolForm";
 import type {
-  DeviceRecord,
   SmsInfo,
   CallInfo,
   ContactInfo,
@@ -41,7 +40,7 @@ export default function DeviceDetailPage() {
 
   const [isAuth, setIsAuth] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [device, setDevice] = useState<DeviceRecord | null>(null);
+  const [device, setDevice] = useState<Device | null>(null);
   const [config, setConfig] = useState<ConfigQueryData | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
@@ -77,7 +76,7 @@ export default function DeviceDetailPage() {
     if (isAuth && id) {
       const fetchDevice = async () => {
         setLoading(true);
-        const result = await getDevice(id as string);
+        const result = await getDevice(Number(id));
         if (result.success && result.data) {
           setDevice(result.data);
           // 获取设备配置

@@ -3,16 +3,20 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { isLoggedIn, logout } from "@/actions/auth";
-import { getDevices, createDevice, deleteDevice } from "@/actions/devices";
+import {
+  getDevices,
+  createDevice,
+  deleteDevice,
+  type Device,
+} from "@/actions/devices";
 import DeviceCard from "@/components/devices/DeviceCard";
 import AddDeviceModal from "@/components/devices/AddDeviceModal";
 import Loading from "@/components/shared/Loading";
-import type { DeviceRecord } from "@/types";
 
 export default function HomePage() {
   const [isAuth, setIsAuth] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [devices, setDevices] = useState<DeviceRecord[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const router = useRouter();
@@ -36,6 +40,7 @@ export default function HomePage() {
       const fetchDevices = async () => {
         setLoading(true);
         const result = await getDevices();
+        console.log("devicesResult", result);
         if (result.success) {
           setDevices(result.data);
         }
@@ -50,12 +55,17 @@ export default function HomePage() {
     router.push("/login");
   };
 
-  const handleAddDevice = async (
-    deviceData: Omit<DeviceRecord, "id" | "user" | "created" | "updated">,
-  ) => {
+  const handleAddDevice = async (deviceData: {
+    name: string;
+    ip: string;
+    port?: number;
+    sign_key?: string;
+    security_mode?: number;
+  }) => {
     const result = await createDevice(deviceData);
     if (result.success) {
       const devicesResult = await getDevices();
+
       if (devicesResult.success) {
         setDevices(devicesResult.data);
       }
@@ -63,7 +73,7 @@ export default function HomePage() {
     }
   };
 
-  const handleDeleteDevice = async (id: string) => {
+  const handleDeleteDevice = async (id: number) => {
     if (confirm("确定要删除这个设备吗？")) {
       const result = await deleteDevice(id);
       if (result.success) {

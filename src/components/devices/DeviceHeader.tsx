@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { logout } from "@/actions/auth";
-import type { DeviceRecord } from "@/types";
+import type { Device } from "@/actions/devices";
 
 interface DeviceHeaderProps {
-  device: DeviceRecord;
+  device: Device;
 }
 
 export default function DeviceHeader({ device }: DeviceHeaderProps) {

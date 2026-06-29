@@ -11,14 +11,17 @@ if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
+// 检查数据库是否已存在
+const dbExists = fs.existsSync(DB_PATH);
+
 // 创建数据库连接
 const db = new Database(DB_PATH);
 
-// 启用外键约束
-db.pragma("journal_mode = WAL");
-
 // 初始化数据库表
 function initDatabase() {
+  // 启用 WAL 模式（持久化设置）
+  db.pragma("journal_mode = WAL");
+
   // 用户表
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -56,7 +59,9 @@ function initDatabase() {
   `);
 }
 
-// 初始化数据库
-initDatabase();
+// 仅在数据库文件不存在时初始化
+if (!dbExists) {
+  initDatabase();
+}
 
 export default db;

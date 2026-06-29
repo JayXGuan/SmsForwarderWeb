@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { sendSms } from "@/actions/deviceApi";
-import type { DeviceRecord } from "@/types";
+import type { Device } from "@/actions/devices";
 
 interface SendSmsFormProps {
-  device: DeviceRecord;
+  device: Device;
   onSuccess: () => void;
 }
 

@@ -1,10 +1,11 @@
 "use server";
 
-import type { DeviceRecord, ApiResponse, ConfigQueryData } from "@/types";
+import type { Device } from "@/actions/devices";
+import type { ApiResponse, ConfigQueryData } from "@/types";
 
 // 通用请求函数
 async function deviceRequest<T>(
-  device: DeviceRecord,
+  device: Device,
   endpoint: string,
   data: Record<string, unknown> = {},
 ): Promise<ApiResponse<T>> {
@@ -64,13 +65,13 @@ async function calcSign(timestamp: number, signKey: string): Promise<string> {
 }
 
 // 查询服务器配置
-export async function queryConfig(device: DeviceRecord) {
+export async function queryConfig(device: Device) {
   return deviceRequest<ConfigQueryData>(device, "/config/query");
 }
 
 // 发送短信
 export async function sendSms(
-  device: DeviceRecord,
+  device: Device,
   params: {
     sim_slot: number;
     phone_numbers: string;
@@ -82,7 +83,7 @@ export async function sendSms(
 
 // 查询短信
 export async function querySms(
-  device: DeviceRecord,
+  device: Device,
   params: {
     type?: number;
     page_num?: number;
@@ -95,7 +96,7 @@ export async function querySms(
 
 // 查询通话记录
 export async function queryCall(
-  device: DeviceRecord,
+  device: Device,
   params: {
     type?: number;
     page_num?: number;
@@ -108,7 +109,7 @@ export async function queryCall(
 
 // 查询联系人
 export async function queryContact(
-  device: DeviceRecord,
+  device: Device,
   params: {
     page_num?: number;
     page_size?: number;
@@ -121,7 +122,7 @@ export async function queryContact(
 
 // 添加联系人
 export async function addContact(
-  device: DeviceRecord,
+  device: Device,
   params: {
     name: string;
     phoneNumber: string;
@@ -131,18 +132,18 @@ export async function addContact(
 }
 
 // 查询电量
-export async function queryBattery(device: DeviceRecord) {
+export async function queryBattery(device: Device) {
   return deviceRequest<Record<string, unknown>>(device, "/battery/query");
 }
 
 // 查询位置
-export async function queryLocation(device: DeviceRecord) {
+export async function queryLocation(device: Device) {
   return deviceRequest<Record<string, unknown>>(device, "/location/query");
 }
 
 // 发送WOL唤醒包
 export async function sendWol(
-  device: DeviceRecord,
+  device: Device,
   params: {
     mac: string;
     ip?: string;

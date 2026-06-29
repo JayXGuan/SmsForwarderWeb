@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { queryConfig } from "@/actions/deviceApi";
-import type { DeviceRecord, ConfigQueryData, SimInfo } from "@/types";
+import type { Device } from "@/actions/devices";
+import type { ConfigQueryData, SimInfo } from "@/types";
 
 interface DeviceCardProps {
-  device: DeviceRecord;
-  onDelete: (id: string) => void;
+  device: Device;
+  onDelete: (id: number) => void;
 }
 
 export default function DeviceCard({ device, onDelete }: DeviceCardProps) {

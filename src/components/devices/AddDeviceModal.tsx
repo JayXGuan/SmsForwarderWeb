@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import Modal from "@/components/shared/Modal";
-import type { DeviceRecord } from "@/types";
 
 interface AddDeviceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (
-    device: Omit<DeviceRecord, "id" | "user" | "created" | "updated">,
-  ) => Promise<void>;
+  onSubmit: (device: {
+    name: string;
+    ip: string;
+    port?: number;
+    sign_key?: string;
+    security_mode?: number;
+  }) => Promise<void>;
 }
 
 export default function AddDeviceModal({

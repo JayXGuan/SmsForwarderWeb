@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { addContact } from "@/actions/deviceApi";
-import type { DeviceRecord } from "@/types";
+import type { Device } from "@/actions/devices";
 
 interface AddContactFormProps {
-  device: DeviceRecord;
+  device: Device;
   onSuccess: () => void;
 }
 

@@ -3,7 +3,7 @@
 import db from "@/lib/db";
 import { getAuthUser } from "./auth";
 
-// 设备类型
+// 设备类型（与数据库表结构一致）
 export interface Device {
   id: number;
   name: string;
@@ -16,38 +16,65 @@ export interface Device {
 }
 
 // 获取用户的所有设备
-export async function getDevices(): Promise<Device[]> {
-  const user = await getAuthUser();
-  if (!user) {
-    return [];
+export async function getDevices(): Promise<{
+  success: boolean;
+  data: Device[];
+  error?: string;
+}> {
+  try {
+    const user = await getAuthUser();
+    if (!user) {
+      return { success: false, data: [], error: "未登录" };
+    }
+
+    const devices = db
+      .prepare(
+        "SELECT * FROM devices WHERE user_id = ? ORDER BY created_at DESC",
+      )
+      .all(user.id) as Device[];
+
+    return { success: true, data: devices };
+  } catch (error) {
+    return {
+      success: false,
+      data: [],
+      error: error instanceof Error ? error.message : "获取设备列表失败",
+    };
   }
-
-  const devices = db
-    .prepare("SELECT * FROM devices WHERE user_id = ? ORDER BY created_at DESC")
-    .all(user.id) as Device[];
-
-  return devices;
 }
 
 // 获取单个设备
-export async function getDevice(id: number): Promise<Device | null> {
-  const user = await getAuthUser();
-  if (!user) {
-    return null;
+export async function getDevice(
+  id: number,
+): Promise<{ success: boolean; data?: Device; error?: string }> {
+  try {
+    const user = await getAuthUser();
+    if (!user) {
+      return { success: false, error: "未登录" };
+    }
+
+    const device = db
+      .prepare("SELECT * FROM devices WHERE id = ? AND user_id = ?")
+      .get(id, user.id) as Device | undefined;
+
+    if (!device) {
+      return { success: false, error: "设备不存在" };
+    }
+
+    return { success: true, data: device };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "获取设备失败",
+    };
   }
-
-  const device = db
-    .prepare("SELECT * FROM devices WHERE id = ? AND user_id = ?")
-    .get(id, user.id) as Device | undefined;
-
-  return device || null;
 }
 
 // 创建设备
 export async function createDevice(data: {
   name: string;
   ip: string;
-  port: number;
+  port?: number;
   sign_key?: string;
   security_mode?: number;
 }): Promise<{ success: boolean; device?: Device; error?: string }> {
