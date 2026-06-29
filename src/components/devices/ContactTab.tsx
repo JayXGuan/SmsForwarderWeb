@@ -11,39 +11,21 @@ interface ContactTabProps {
 
 export default function ContactTab({ device }: ContactTabProps) {
   const [contactList, setContactList] = useState<ContactInfo[]>([]);
-  const [pageNum, setPageNum] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
-
-  const pageSize = 50;
 
   // 首次挂载时加载
   useEffect(() => {
-    loadContactList(1);
+    loadContactList();
   }, []);
 
-  const loadContactList = async (page: number) => {
+  const loadContactList = async () => {
     setLoading(true);
-    const result = await queryContact(device, {
-      page_num: page,
-      page_size: pageSize,
-    });
+    const result = await queryContact(device);
     if (result.code === 200 && result.data) {
-      const newData = result.data as unknown as ContactInfo[];
-      setContactList((prev) => [...prev, ...newData]);
-      if (newData.length < pageSize) {
-        setHasMore(false);
-      }
+      setContactList(result.data as unknown as ContactInfo[]);
     }
     setLoading(false);
   };
-
-  const handleLoadMore = () => {
-    const nextPage = pageNum + 1;
-    setPageNum(nextPage);
-    loadContactList(nextPage);
-  };
-  console.log("contactList", contactList);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -69,21 +51,6 @@ export default function ContactTab({ device }: ContactTabProps) {
             <div className="inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
             加载中...
           </div>
-        )}
-      </div>
-      {/* 底部加载更多 */}
-      <div className="p-4 border-t border-gray-100 text-center">
-        {hasMore && contactList.length > 0 && (
-          <button
-            onClick={handleLoadMore}
-            disabled={loading}
-            className="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg disabled:opacity-50"
-          >
-            {loading ? "加载中..." : "加载更多"}
-          </button>
-        )}
-        {!hasMore && contactList.length > 0 && (
-          <span className="text-sm text-gray-400">没有更多数据了</span>
         )}
       </div>
     </div>
