@@ -1,0 +1,39 @@
+# Dependencies (will be installed in builder stage)
+node_modules
+
+# Database files - IMPORTANT: never include in image
+data/
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test files
+coverage
+
+# Docker files (not needed in build context)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Build scripts
+build-and-push.sh
+pull-image.sh
