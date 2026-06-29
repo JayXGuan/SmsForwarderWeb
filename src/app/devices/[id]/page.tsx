@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { isLoggedIn, logout } from "@/actions/auth";
 import { getDevice } from "@/actions/devices";
@@ -25,6 +25,7 @@ import type {
   BatteryInfo,
   LocationInfo,
   SimInfo,
+  ConfigQueryData,
 } from "@/types";
 
 export default function DeviceDetailPage() {
@@ -34,7 +35,7 @@ export default function DeviceDetailPage() {
   const [isAuth, setIsAuth] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [device, setDevice] = useState<DeviceRecord | null>(null);
-  const [config, setConfig] = useState<Record<string, unknown> | null>(null);
+  const [config, setConfig] = useState<ConfigQueryData | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +76,7 @@ export default function DeviceDetailPage() {
           // 获取设备配置
           const configResult = await queryConfig(result.data);
           if (configResult.code === 200 && configResult.data) {
-            setConfig(configResult.data);
+            setConfig(configResult.data as unknown as ConfigQueryData);
           }
         } else {
           setError(result.error || "获取设备信息失败");
@@ -86,72 +87,95 @@ export default function DeviceDetailPage() {
     }
   }, [isAuth, id]);
 
-  // 加载各类数据
-  const loadSmsList = async (type: number = 1) => {
-    if (!device) return;
-    const result = await querySms(device, { type, page_num: 1, page_size: 20 });
-    if (result.code === 200 && result.data) {
-      setSmsList(result.data as SmsInfo[]);
-    }
-  };
+  // 加载各类数据 - 使用 useCallback 避免在 useEffect 中直接调用
+  const loadSmsList = useCallback(
+    async (type: number = 1) => {
+      if (!device) return;
+      const result = await querySms(device, {
+        type,
+        page_num: 1,
+        page_size: 20,
+      });
+      if (result.code === 200 && result.data) {
+        setSmsList(result.data as unknown as SmsInfo[]);
+      }
+    },
+    [device],
+  );
 
-  const loadCallList = async (type: number = 1) => {
-    if (!device) return;
-    const result = await queryCall(device, {
-      type,
-      page_num: 1,
-      page_size: 20,
-    });
-    if (result.code === 200 && result.data) {
-      setCallList(result.data as CallInfo[]);
-    }
-  };
+  const loadCallList = useCallback(
+    async (type: number = 1) => {
+      if (!device) return;
+      const result = await queryCall(device, {
+        type,
+        page_num: 1,
+        page_size: 20,
+      });
+      if (result.code === 200 && result.data) {
+        setCallList(result.data as unknown as CallInfo[]);
+      }
+    },
+    [device],
+  );
 
-  const loadContactList = async () => {
+  const loadContactList = useCallback(async () => {
     if (!device) return;
     const result = await queryContact(device, { page_num: 1, page_size: 50 });
     if (result.code === 200 && result.data) {
-      setContactList(result.data as ContactInfo[]);
+      setContactList(result.data as unknown as ContactInfo[]);
     }
-  };
+  }, [device]);
 
-  const loadBattery = async () => {
+  const loadBattery = useCallback(async () => {
     if (!device) return;
     const result = await queryBattery(device);
     if (result.code === 200 && result.data) {
-      setBattery(result.data as BatteryInfo);
+      setBattery(result.data as unknown as BatteryInfo);
     }
-  };
+  }, [device]);
 
-  const loadLocation = async () => {
+  const loadLocation = useCallback(async () => {
     if (!device) return;
     const result = await queryLocation(device);
     if (result.code === 200 && result.data) {
-      setLocation(result.data as LocationInfo);
+      setLocation(result.data as unknown as LocationInfo);
     }
-  };
+  }, [device]);
 
   // Tab切换时加载对应数据
   useEffect(() => {
     if (!device || activeTab === "overview") return;
-    switch (activeTab) {
-      case "sms":
-        loadSmsList();
-        break;
-      case "call":
-        loadCallList();
-        break;
-      case "contact":
-        loadContactList();
-        break;
-      case "battery":
-        loadBattery();
-        break;
-      case "location":
-        loadLocation();
-        break;
-    }
-  }, [activeTab, device]);
+
+    const loadData = async () => {
+      switch (activeTab) {
+        case "sms":
+          await loadSmsList();
+          break;
+        case "call":
+          await loadCallList();
+          break;
+        case "contact":
+          await loadContactList();
+          break;
+        case "battery":
+          await loadBattery();
+          break;
+        case "location":
+          await loadLocation();
+          break;
+      }
+    };
+
+    loadData();
+  }, [
+    activeTab,
+    device,
+    loadSmsList,
+    loadCallList,
+    loadContactList,
+    loadBattery,
+    loadLocation,
+  ]);
 
   const handleLogout = async () => {
     await logout();
@@ -190,7 +214,7 @@ export default function DeviceDetailPage() {
     );
   }
 
-  const simInfoList = (config?.sim_info_list as Record<string, SimInfo>) || {};
+  const simInfoList = config?.sim_info_list || {};
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -320,10 +344,12 @@ export default function DeviceDetailPage() {
                         SIM{parseInt(key) + 1}
                       </span>
                       <span className="text-sm text-gray-500">
-                        {sim.mCarrierName}
+                        {(sim as SimInfo).mCarrierName}
                       </span>
                     </div>
-                    <p className="text-gray-600">{sim.mNumber || "未知号码"}</p>
+                    <p className="text-gray-600">
+                      {(sim as SimInfo).mNumber || "未知号码"}
+                    </p>
                   </div>
                 ))}
               </div>
