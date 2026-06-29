@@ -29,12 +29,12 @@ export interface ApiRequest<T = unknown> {
 
 // SimInfo SIM卡信息
 export interface SimInfo {
-  mCarrierName: string;
-  mIccId: string;
-  mSimSlotIndex: number;
-  mNumber: string;
-  mCountryIso: string;
-  mSubscriptionId: number;
+  carrier_name: string;
+  icc_id: string;
+  sim_slot_index: number;
+  number: string;
+  country_iso: string;
+  subscription_id: number;
 }
 
 // ConfigQueryData 配置查询数据

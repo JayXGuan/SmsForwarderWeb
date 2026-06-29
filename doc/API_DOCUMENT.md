@@ -123,28 +123,28 @@ sign = calc_sign(timestamp, "your_sign_key")
     "enable_api_wol": true,
     "enable_api_location": false,
     "extra_device_mark": "我的手机",
-    "extra_sim1": "SIM1备注",
-    "extra_sim2": "SIM2备注",
+    "extra_sim1": "中国联通_13800138000",
+    "extra_sim2": "中国电信_13900139000",
     "sim_info_list": {
       "0": {
-        "mCarrierName": "中国联通",
-        "mIccId": "898601...",
-        "mSimSlotIndex": 0,
-        "mNumber": "13800138000",
-        "mCountryIso": "cn",
-        "mSubscriptionId": 1
+        "carrier_name": "中国联通",
+        "icc_id": "898601...",
+        "sim_slot_index": 0,
+        "number": "",
+        "country_iso": "cn",
+        "subscription_id": 1
       },
       "1": {
-        "mCarrierName": "中国电信",
-        "mIccId": "898603...",
-        "mSimSlotIndex": 1,
-        "mNumber": "13900139000",
-        "mCountryIso": "cn",
-        "mSubscriptionId": 2
+        "carrier_name": "中国电信",
+        "icc_id": "898603...",
+        "sim_slot_index": 1,
+        "number": "",
+        "country_iso": "cn",
+        "subscription_id": 2
       }
     },
-    "version_code": 100038,
-    "version_name": "1.0.38"
+    "version_code": 100055,
+    "version_name": "3.5.0.260628"
   },
   "timestamp": 1782720009000
 }
@@ -605,12 +605,14 @@ sign = calc_sign(timestamp, "your_sign_key")
 
 | 字段名          | 类型   | 说明                     |
 | --------------- | ------ | ------------------------ |
-| mCarrierName    | String | 运营商名称               |
-| mIccId          | String | ICCID                    |
-| mSimSlotIndex   | Int    | 卡槽索引：0=SIM1, 1=SIM2 |
-| mNumber         | String | 手机号码                 |
-| mCountryIso     | String | 国家代码                 |
-| mSubscriptionId | Int    | SubscriptionId           |
+| carrier_name    | String | 运营商名称               |
+| icc_id          | String | ICCID                    |
+| sim_slot_index  | Int    | 卡槽索引：0=SIM1, 1=SIM2 |
+| number          | String | 手机号码（可能为空）     |
+| country_iso     | String | 国家代码                 |
+| subscription_id | Int    | SubscriptionId           |
+
+> **注意**: `sim_info_list` 中的 `number` 字段受系统限制可能为空或不准确，建议同时使用 `extra_sim1` 和 `extra_sim2` 字段来获取完整的号码信息。
 
 ### SmsInfo (短信信息)
 

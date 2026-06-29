@@ -23,21 +23,33 @@ export default function OverviewTab({
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">SIM 卡信息</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Object.entries(simInfoList).map(([key, sim]) => (
-            <div key={key} className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-gray-900">
-                  SIM{parseInt(key) + 1}
-                </span>
-                <span className="text-sm text-gray-500">
-                  {(sim as SimInfo).mCarrierName}
-                </span>
+          {Object.entries(simInfoList).map(([key, sim]) => {
+            const simInfo = sim as SimInfo;
+            const simIndex = parseInt(key) + 1;
+            const extraSim = config[
+              `extra_sim${simIndex}` as keyof ConfigQueryData
+            ] as string;
+            return (
+              <div key={key} className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-gray-900">
+                    SIM{simIndex}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {simInfo.carrier_name}
+                  </span>
+                </div>
+                <p className="text-gray-600">
+                  {extraSim || simInfo.number || "未知号码"}
+                </p>
+                {simInfo.number && extraSim && (
+                  <p className="text-xs text-gray-400">
+                    sim_info: {simInfo.number}
+                  </p>
+                )}
               </div>
-              <p className="text-gray-600">
-                {(sim as SimInfo).mNumber || "未知号码"}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

@@ -117,16 +117,27 @@ export default function DeviceCard({ device, onDelete }: DeviceCardProps) {
               <span className="text-sm text-gray-400">加载中...</span>
             )}
             {config?.sim_info_list &&
-              Object.values(config.sim_info_list).map(
-                (sim: SimInfo, index: number) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-2.5 py-1 bg-gray-50 text-gray-600 text-sm rounded-lg"
-                  >
-                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                    {sim.mNumber || "未知号码"}
-                  </span>
-                ),
+              Object.entries(config.sim_info_list).map(
+                ([key, sim]: [string, SimInfo]) => {
+                  const simIndex = parseInt(key) + 1;
+                  const extraSim = config[
+                    `extra_sim${simIndex}` as keyof ConfigQueryData
+                  ] as string;
+                  return (
+                    <span
+                      key={key}
+                      className="inline-flex items-center px-2.5 py-1 bg-gray-50 text-gray-600 text-sm rounded-lg"
+                    >
+                      <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                      {extraSim || sim.number || "未知号码"}
+                      {sim.number && extraSim && (
+                        <span className="text-xs text-gray-400 ml-1">
+                          ({sim.number})
+                        </span>
+                      )}
+                    </span>
+                  );
+                },
               )}
             {error && <span className="text-sm text-red-500">{error}</span>}
           </div>
@@ -167,21 +178,32 @@ export default function DeviceCard({ device, onDelete }: DeviceCardProps) {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {Object.entries(config.sim_info_list || {}).map(
-                    ([key, sim]: [string, SimInfo]) => (
-                      <div key={key} className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-900">
-                            SIM{parseInt(key) + 1}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {sim.mCarrierName}
-                          </span>
+                    ([key, sim]: [string, SimInfo]) => {
+                      const simIndex = parseInt(key) + 1;
+                      const extraSim = config[
+                        `extra_sim${simIndex}` as keyof ConfigQueryData
+                      ] as string;
+                      return (
+                        <div key={key} className="bg-gray-50 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-900">
+                              SIM{simIndex}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {sim.carrier_name}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            {extraSim || sim.number || "未知号码"}
+                          </p>
+                          {sim.number && extraSim && (
+                            <p className="text-xs text-gray-400">
+                              sim_info: {sim.number}
+                            </p>
+                          )}
                         </div>
-                        <p className="text-sm text-gray-600">
-                          {sim.mNumber || "未知号码"}
-                        </p>
-                      </div>
-                    ),
+                      );
+                    },
                   )}
                 </div>
               </div>
