@@ -4,7 +4,7 @@ services:
     container_name: smsforwarder
     restart: on-failure:3
     ports:
-      - "5000:5000"
+      - "9000:9000"
     environment:
       # Application Configuration
       - NODE_ENV=production
