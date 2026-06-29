@@ -1,7 +1,7 @@
 services:
-  smsforwarder:
-    image: smsforwarder:latest
-    container_name: smsforwarder
+  smsweb:
+    image: ccr.ccs.tencentyun.com/other_biz/smsweb:latest
+    container_name: smsweb
     restart: on-failure:3
     ports:
       - "9000:9000"
@@ -9,16 +9,9 @@ services:
       # Application Configuration
       - NODE_ENV=production
     volumes:
-      - smsforwarder_data:/app/data
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      - baota_net
+      - smsweb_data:/app/data
+    network_mode: bridge
 
 volumes:
-  smsforwarder_data:
-    name: smsforwarder_data
-
-networks:
-  baota_net:
-    external: true
+  smsweb_data:
+    name: smsweb_data
