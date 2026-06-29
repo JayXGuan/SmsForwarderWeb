@@ -22,15 +22,28 @@
 
 ## 快速开始
 
-### 1. 安装 PocketBase
-
-从 [PocketBase 官网](https://pocketbase.io/docs/) 下载并安装 PocketBase。
-
-### 2. 启动 PocketBase
+### 1. 安装依赖
 
 ```bash
-./pocketbase serve
+npm install
+# 或
+pnpm install
 ```
+
+### 2. 启动开发服务器
+
+本项目已集成 PocketBase，启动时会自动下载并运行 PocketBase 服务：
+
+```bash
+npm run dev
+```
+
+此命令会同时启动：
+
+- **Next.js** 开发服务器 (端口 3000)
+- **PocketBase** 服务 (端口 8090)
+
+首次运行时，脚本会自动下载适合您系统的 PocketBase 可执行文件。
 
 ### 3. 配置 PocketBase
 
@@ -53,51 +66,59 @@
 | security_mode | number   | 安全模式：0=无, 1=签名验证 |
 | user          | relation | 关联用户                   |
 
-### 4. 安装依赖
+### 4. 配置环境变量（可选）
 
-```bash
-npm install
-# 或
-pnpm install
-```
-
-### 5. 配置环境变量
-
-创建 `.env.local` 文件：
+如果 PocketBase 运行在其他地址，创建 `.env.local` 文件：
 
 ```env
 NEXT_PUBLIC_POCKETBASE_URL=http://127.0.0.1:8090
 ```
 
-### 6. 启动开发服务器
+### 单独启动服务
+
+如果需要单独启动某个服务：
 
 ```bash
-npm run dev
-# 或
-pnpm dev
+# 只启动 Next.js
+npm run dev:next
+
+# 只启动 PocketBase (macOS/Linux)
+npm run dev:pocketbase
+
+# 只启动 PocketBase (Windows)
+npm run dev:pocketbase:win
 ```
 
-访问 `http://localhost:3000` 查看应用。
+访问 `http://localhost:3000` 查看 Next.js 应用。
+访问 `http://127.0.0.1:8090/_/` 查看 PocketBase 管理后台。
 
 ## 项目结构
 
 ```
-src/
-├── app/                    # Next.js App Router
-│   ├── login/              # 登录页面
-│   ├── devices/[id]/       # 设备详情页
-│   ├── layout.tsx          # 根布局
-│   └── page.tsx            # 首页（设备列表）
-├── components/             # React 组件
-│   ├── devices/            # 设备相关组件
-│   └── shared/             # 共享组件
-├── context/                # React Context
-│   └── AuthContext.tsx     # 认证上下文
-├── lib/                    # 工具库
-│   ├── pocketbase.ts       # PocketBase 客户端
-│   └── deviceApi.ts        # 设备 API 封装
-└── types/                  # TypeScript 类型定义
-    └── index.ts
+SmsForwarderWeb/
+├── pb/                     # PocketBase 可执行文件目录 (gitignore)
+├── pb_data/                # PocketBase 数据目录 (gitignore)
+├── scripts/                # 启动脚本
+│   ├── start-pocketbase.sh # macOS/Linux 启动脚本
+│   └── start-pocketbase.bat# Windows 启动脚本
+├── src/
+│   ├── app/                # Next.js App Router
+│   │   ├── login/          # 登录页面
+│   │   ├── devices/[id]/   # 设备详情页
+│   │   ├── layout.tsx      # 根布局
+│   │   └── page.tsx        # 首页（设备列表）
+│   ├── components/         # React 组件
+│   │   ├── devices/        # 设备相关组件
+│   │   └── shared/         # 共享组件
+│   ├── actions/            # Server Actions
+│   │   ├── auth.ts         # 认证相关
+│   │   ├── devices.ts      # 设备管理
+│   │   └── deviceApi.ts    # 设备 API 调用
+│   ├── lib/                # 工具库
+│   │   └── pocketbase.ts   # PocketBase 客户端
+│   └── types/              # TypeScript 类型定义
+│       └── index.ts
+└── ...
 ```
 
 ## API 功能
