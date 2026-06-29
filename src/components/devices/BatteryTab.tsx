@@ -1,16 +1,53 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { queryBattery } from "@/actions/deviceApi";
 import type { BatteryInfo } from "@/types";
+import type { Device } from "@/actions/devices";
 
 interface BatteryTabProps {
-  battery: BatteryInfo | null;
+  device: Device;
 }
 
-export default function BatteryTab({ battery }: BatteryTabProps) {
-  if (!battery) {
+export default function BatteryTab({ device }: BatteryTabProps) {
+  const [battery, setBattery] = useState<BatteryInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 首次挂载时加载
+  useEffect(() => {
+    loadBattery();
+  }, []);
+
+  const loadBattery = async () => {
+    setLoading(true);
+    setError(null);
+    const result = await queryBattery(device);
+    if (result.code === 200 && result.data) {
+      setBattery(result.data as unknown as BatteryInfo);
+    } else {
+      setError("无法获取电量信息");
+    }
+    setLoading(false);
+  };
+
+  if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="text-center text-gray-500 py-8">无法获取电量信息</div>
+        <div className="text-center text-gray-500 py-8">
+          <div className="inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+          加载中...
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !battery) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="text-center text-gray-500 py-8">
+          {error || "无法获取电量信息"}
+        </div>
       </div>
     );
   }

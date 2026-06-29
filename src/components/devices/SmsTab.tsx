@@ -1,21 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { querySms } from "@/actions/deviceApi";
 import type { SmsInfo } from "@/types";
+import type { Device } from "@/actions/devices";
 
 interface SmsTabProps {
-  smsList: SmsInfo[];
-  onLoadSms: (type: number) => void;
+  device: Device;
 }
 
-export default function SmsTab({ smsList, onLoadSms }: SmsTabProps) {
+export default function SmsTab({ device }: SmsTabProps) {
+  const [smsList, setSmsList] = useState<SmsInfo[]>([]);
   const [activeType, setActiveType] = useState(1);
+  const [pageNum, setPageNum] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const pageSize = 20;
+
+  // 首次挂载时加载
+  useEffect(() => {
+    loadSmsList(activeType, 1, false);
+  }, []);
+
+  const loadSmsList = async (type: number, page: number, append: boolean) => {
+    setLoading(true);
+    const result = await querySms(device, {
+      type,
+      page_num: page,
+      page_size: pageSize,
+    });
+    if (result.code === 200 && result.data) {
+      const newData = result.data as unknown as SmsInfo[];
+      if (newData.length === 0) {
+        setHasMore(false);
+      } else {
+        if (append) {
+          setSmsList((prev) => [...prev, ...newData]);
+        } else {
+          setSmsList(newData);
+        }
+      }
+    }
+    setLoading(false);
+  };
 
   const handleTypeChange = (type: number) => {
     setActiveType(type);
-    onLoadSms(type);
+    setPageNum(1);
+    setHasMore(true);
+    setSmsList([]);
+    loadSmsList(type, 1, false);
   };
-  console.log("SmsTab", "activeType", smsList, activeType);
+
+  const handleLoadMore = () => {
+    const nextPage = pageNum + 1;
+    setPageNum(nextPage);
+    loadSmsList(activeType, nextPage, true);
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -45,7 +87,7 @@ export default function SmsTab({ smsList, onLoadSms }: SmsTabProps) {
         </div>
       </div>
       <div className="divide-y divide-gray-100">
-        {smsList.length === 0 ? (
+        {smsList.length === 0 && !loading ? (
           <div className="p-8 text-center text-gray-500">暂无短信记录</div>
         ) : (
           smsList.map((sms, index) => (
@@ -64,6 +106,27 @@ export default function SmsTab({ smsList, onLoadSms }: SmsTabProps) {
               <p className="text-sm text-gray-600">{sms.content}</p>
             </div>
           ))
+        )}
+        {loading && (
+          <div className="p-4 text-center text-gray-500">
+            <div className="inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+            加载中...
+          </div>
+        )}
+      </div>
+      {/* 底部加载更多 */}
+      <div className="p-4 border-t border-gray-100 text-center">
+        {hasMore && smsList.length > 0 && (
+          <button
+            onClick={handleLoadMore}
+            disabled={loading}
+            className="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg disabled:opacity-50"
+          >
+            {loading ? "加载中..." : "加载更多"}
+          </button>
+        )}
+        {!hasMore && smsList.length > 0 && (
+          <span className="text-sm text-gray-400">没有更多数据了</span>
         )}
       </div>
     </div>

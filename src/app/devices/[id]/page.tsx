@@ -1,17 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { isLoggedIn } from "@/actions/auth";
 import { getDevice, type Device } from "@/actions/devices";
-import {
-  queryConfig,
-  querySms,
-  queryCall,
-  queryContact,
-  queryBattery,
-  queryLocation,
-} from "@/actions/deviceApi";
+import { queryConfig } from "@/actions/deviceApi";
 import Loading from "@/components/shared/Loading";
 import Modal from "@/components/shared/Modal";
 import DeviceHeader from "@/components/devices/DeviceHeader";
@@ -25,14 +18,7 @@ import LocationTab from "@/components/devices/LocationTab";
 import SendSmsForm from "@/components/devices/SendSmsForm";
 import AddContactForm from "@/components/devices/AddContactForm";
 import WolForm from "@/components/devices/WolForm";
-import type {
-  SmsInfo,
-  CallInfo,
-  ContactInfo,
-  BatteryInfo,
-  LocationInfo,
-  ConfigQueryData,
-} from "@/types";
+import type { ConfigQueryData } from "@/types";
 
 export default function DeviceDetailPage() {
   const { id } = useParams();
@@ -45,13 +31,6 @@ export default function DeviceDetailPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // 数据列表状态
-  const [smsList, setSmsList] = useState<SmsInfo[]>([]);
-  const [callList, setCallList] = useState<CallInfo[]>([]);
-  const [contactList, setContactList] = useState<ContactInfo[]>([]);
-  const [battery, setBattery] = useState<BatteryInfo | null>(null);
-  const [location, setLocation] = useState<LocationInfo | null>(null);
 
   // 弹窗状态
   const [showSendSmsModal, setShowSendSmsModal] = useState(false);
@@ -92,96 +71,6 @@ export default function DeviceDetailPage() {
       fetchDevice();
     }
   }, [isAuth, id]);
-
-  // 加载各类数据
-  const loadSmsList = useCallback(
-    async (type: number = 1) => {
-      if (!device) return;
-      const result = await querySms(device, {
-        type,
-        page_num: 1,
-        page_size: 20,
-      });
-      if (result.code === 200 && result.data) {
-        setSmsList(result.data as unknown as SmsInfo[]);
-      }
-    },
-    [device],
-  );
-
-  const loadCallList = useCallback(
-    async (type: number = 1) => {
-      if (!device) return;
-      const result = await queryCall(device, {
-        type,
-        page_num: 1,
-        page_size: 20,
-      });
-      if (result.code === 200 && result.data) {
-        setCallList(result.data as unknown as CallInfo[]);
-      }
-    },
-    [device],
-  );
-
-  const loadContactList = useCallback(async () => {
-    if (!device) return;
-    const result = await queryContact(device, { page_num: 1, page_size: 50 });
-    if (result.code === 200 && result.data) {
-      setContactList(result.data as unknown as ContactInfo[]);
-    }
-  }, [device]);
-
-  const loadBattery = useCallback(async () => {
-    if (!device) return;
-    const result = await queryBattery(device);
-    if (result.code === 200 && result.data) {
-      setBattery(result.data as unknown as BatteryInfo);
-    }
-  }, [device]);
-
-  const loadLocation = useCallback(async () => {
-    if (!device) return;
-    const result = await queryLocation(device);
-    if (result.code === 200 && result.data) {
-      setLocation(result.data as unknown as LocationInfo);
-    }
-  }, [device]);
-
-  // Tab切换时加载对应数据
-  useEffect(() => {
-    if (!device || activeTab === "overview") return;
-
-    const loadData = async () => {
-      switch (activeTab) {
-        case "sms":
-          await loadSmsList();
-          break;
-        case "call":
-          await loadCallList();
-          break;
-        case "contact":
-          await loadContactList();
-          break;
-        case "battery":
-          await loadBattery();
-          break;
-        case "location":
-          await loadLocation();
-          break;
-      }
-    };
-
-    loadData();
-  }, [
-    activeTab,
-    device,
-    loadSmsList,
-    loadCallList,
-    loadContactList,
-    loadBattery,
-    loadLocation,
-  ]);
 
   if (authLoading || !isAuth) {
     return (
@@ -238,19 +127,15 @@ export default function DeviceDetailPage() {
           />
         )}
 
-        {activeTab === "sms" && (
-          <SmsTab smsList={smsList} onLoadSms={loadSmsList} />
-        )}
+        {activeTab === "sms" && <SmsTab device={device} />}
 
-        {activeTab === "call" && (
-          <CallTab callList={callList} onLoadCall={loadCallList} />
-        )}
+        {activeTab === "call" && <CallTab device={device} />}
 
-        {activeTab === "contact" && <ContactTab contactList={contactList} />}
+        {activeTab === "contact" && <ContactTab device={device} />}
 
-        {activeTab === "battery" && <BatteryTab battery={battery} />}
+        {activeTab === "battery" && <BatteryTab device={device} />}
 
-        {activeTab === "location" && <LocationTab location={location} />}
+        {activeTab === "location" && <LocationTab device={device} />}
       </main>
 
       {/* 发送短信弹窗 */}
@@ -273,10 +158,7 @@ export default function DeviceDetailPage() {
       >
         <AddContactForm
           device={device}
-          onSuccess={() => {
-            setShowAddContactModal(false);
-            loadContactList();
-          }}
+          onSuccess={() => setShowAddContactModal(false)}
         />
       </Modal>
 

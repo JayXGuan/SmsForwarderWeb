@@ -1,16 +1,53 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { queryLocation } from "@/actions/deviceApi";
 import type { LocationInfo } from "@/types";
+import type { Device } from "@/actions/devices";
 
 interface LocationTabProps {
-  location: LocationInfo | null;
+  device: Device;
 }
 
-export default function LocationTab({ location }: LocationTabProps) {
-  if (!location) {
+export default function LocationTab({ device }: LocationTabProps) {
+  const [location, setLocation] = useState<LocationInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 首次挂载时加载
+  useEffect(() => {
+    loadLocation();
+  }, []);
+
+  const loadLocation = async () => {
+    setLoading(true);
+    setError(null);
+    const result = await queryLocation(device);
+    if (result.code === 200 && result.data) {
+      setLocation(result.data as unknown as LocationInfo);
+    } else {
+      setError("无法获取位置信息");
+    }
+    setLoading(false);
+  };
+
+  if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="text-center text-gray-500 py-8">无法获取位置信息</div>
+        <div className="text-center text-gray-500 py-8">
+          <div className="inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+          加载中...
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !location) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="text-center text-gray-500 py-8">
+          {error || "无法获取位置信息"}
+        </div>
       </div>
     );
   }

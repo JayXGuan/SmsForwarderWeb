@@ -14,7 +14,7 @@ export default function DeviceTabNav({
   onTabChange,
 }: DeviceTabNavProps) {
   const tabs = [
-    { key: "overview", label: "概览" },
+    { key: "overview", label: "概览", enabled: true },
     { key: "sms", label: "短信", enabled: config?.enable_api_sms_query },
     { key: "call", label: "通话", enabled: config?.enable_api_call_query },
     {
