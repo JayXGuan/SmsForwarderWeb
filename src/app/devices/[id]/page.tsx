@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { isLoggedIn, logout } from "@/actions/auth";
+import { isLoggedIn } from "@/actions/auth";
 import { getDevice } from "@/actions/devices";
 import {
   queryConfig,
@@ -11,12 +11,20 @@ import {
   queryContact,
   queryBattery,
   queryLocation,
-  sendSms,
-  addContact,
-  sendWol,
 } from "@/actions/deviceApi";
 import Loading from "@/components/shared/Loading";
 import Modal from "@/components/shared/Modal";
+import DeviceHeader from "@/components/devices/DeviceHeader";
+import DeviceTabNav from "@/components/devices/DeviceTabNav";
+import OverviewTab from "@/components/devices/OverviewTab";
+import SmsTab from "@/components/devices/SmsTab";
+import CallTab from "@/components/devices/CallTab";
+import ContactTab from "@/components/devices/ContactTab";
+import BatteryTab from "@/components/devices/BatteryTab";
+import LocationTab from "@/components/devices/LocationTab";
+import SendSmsForm from "@/components/devices/SendSmsForm";
+import AddContactForm from "@/components/devices/AddContactForm";
+import WolForm from "@/components/devices/WolForm";
 import type {
   DeviceRecord,
   SmsInfo,
@@ -24,7 +32,6 @@ import type {
   ContactInfo,
   BatteryInfo,
   LocationInfo,
-  SimInfo,
   ConfigQueryData,
 } from "@/types";
 
@@ -87,7 +94,7 @@ export default function DeviceDetailPage() {
     }
   }, [isAuth, id]);
 
-  // 加载各类数据 - 使用 useCallback 避免在 useEffect 中直接调用
+  // 加载各类数据
   const loadSmsList = useCallback(
     async (type: number = 1) => {
       if (!device) return;
@@ -177,11 +184,6 @@ export default function DeviceDetailPage() {
     loadLocation,
   ]);
 
-  const handleLogout = async () => {
-    await logout();
-    router.push("/login");
-  };
-
   if (authLoading || !isAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -214,449 +216,42 @@ export default function DeviceDetailPage() {
     );
   }
 
-  const simInfoList = config?.sim_info_list || {};
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 顶部导航栏 */}
-      <header className="bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push("/")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <svg
-                  className="w-5 h-5 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  {device.name}
-                </h1>
-                <p className="text-xs text-gray-500">
-                  {device.ip}:{device.port}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              退出登录
-            </button>
-          </div>
-        </div>
-      </header>
+      <DeviceHeader device={device} />
 
       {/* Tab导航 */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex gap-1">
-            {[
-              { key: "overview", label: "概览" },
-              {
-                key: "sms",
-                label: "短信",
-                enabled: config?.enable_api_sms_query,
-              },
-              {
-                key: "call",
-                label: "通话",
-                enabled: config?.enable_api_call_query,
-              },
-              {
-                key: "contact",
-                label: "联系人",
-                enabled: config?.enable_api_contact_query,
-              },
-              {
-                key: "battery",
-                label: "电量",
-                enabled: config?.enable_api_battery_query,
-              },
-              {
-                key: "location",
-                label: "位置",
-                enabled: config?.enable_api_location,
-              },
-            ].map(({ key, label, enabled }) => (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                disabled={key !== "overview" && !enabled}
-                className={`px-4 py-3 text-sm font-medium transition-colors relative ${
-                  activeTab === key
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : enabled
-                      ? "text-gray-600 hover:text-gray-900"
-                      : "text-gray-400 cursor-not-allowed"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
+      <DeviceTabNav
+        activeTab={activeTab}
+        config={config}
+        onTabChange={setActiveTab}
+      />
 
       {/* 主内容区 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* 概览Tab */}
         {activeTab === "overview" && config && (
-          <div className="space-y-6">
-            {/* SIM卡信息 */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                SIM 卡信息
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Object.entries(simInfoList).map(([key, sim]) => (
-                  <div key={key} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-gray-900">
-                        SIM{parseInt(key) + 1}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {(sim as SimInfo).mCarrierName}
-                      </span>
-                    </div>
-                    <p className="text-gray-600">
-                      {(sim as SimInfo).mNumber || "未知号码"}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 快捷操作 */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                快捷操作
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {config.enable_api_sms_send && (
-                  <button
-                    onClick={() => setShowSendSmsModal(true)}
-                    className="flex flex-col items-center gap-2 p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors"
-                  >
-                    <svg
-                      className="w-8 h-8 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-blue-600">
-                      发送短信
-                    </span>
-                  </button>
-                )}
-                {config.enable_api_contact_add && (
-                  <button
-                    onClick={() => setShowAddContactModal(true)}
-                    className="flex flex-col items-center gap-2 p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors"
-                  >
-                    <svg
-                      className="w-8 h-8 text-green-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-green-600">
-                      添加联系人
-                    </span>
-                  </button>
-                )}
-                {config.enable_api_wol && (
-                  <button
-                    onClick={() => setShowWolModal(true)}
-                    className="flex flex-col items-center gap-2 p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors"
-                  >
-                    <svg
-                      className="w-8 h-8 text-purple-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-purple-600">
-                      WOL唤醒
-                    </span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* 版本信息 */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                版本信息
-              </h3>
-              <div className="flex items-center gap-4 text-gray-600">
-                <span>版本名称：{config.version_name || "未知"}</span>
-                <span>版本号：{config.version_code || "未知"}</span>
-              </div>
-            </div>
-          </div>
+          <OverviewTab
+            config={config}
+            onSendSms={() => setShowSendSmsModal(true)}
+            onAddContact={() => setShowAddContactModal(true)}
+            onWol={() => setShowWolModal(true)}
+          />
         )}
 
-        {/* 短信Tab */}
         {activeTab === "sms" && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">短信记录</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => loadSmsList(1)}
-                  className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"
-                >
-                  收到的短信
-                </button>
-                <button
-                  onClick={() => loadSmsList(2)}
-                  className="px-3 py-1.5 text-sm bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100"
-                >
-                  发送的短信
-                </button>
-              </div>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {smsList.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  暂无短信记录
-                </div>
-              ) : (
-                smsList.map((sms, index) => (
-                  <div key={index} className="p-4 hover:bg-gray-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-gray-900">
-                        {sms.name || sms.number}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {new Date(sms.date).toLocaleString()}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600">{sms.content}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <SmsTab smsList={smsList} onLoadSms={loadSmsList} />
         )}
 
-        {/* 通话Tab */}
         {activeTab === "call" && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">通话记录</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => loadCallList(1)}
-                  className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"
-                >
-                  来电
-                </button>
-                <button
-                  onClick={() => loadCallList(2)}
-                  className="px-3 py-1.5 text-sm bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100"
-                >
-                  去电
-                </button>
-                <button
-                  onClick={() => loadCallList(3)}
-                  className="px-3 py-1.5 text-sm bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100"
-                >
-                  未接
-                </button>
-              </div>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {callList.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  暂无通话记录
-                </div>
-              ) : (
-                callList.map((call, index) => (
-                  <div key={index} className="p-4 hover:bg-gray-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-gray-900">
-                        {call.name || call.number}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {new Date(call.dateLong).toLocaleString()}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      通话时长：{call.duration}秒
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <CallTab callList={callList} onLoadCall={loadCallList} />
         )}
 
-        {/* 联系人Tab */}
-        {activeTab === "contact" && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-4 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900">
-                联系人列表
-              </h3>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {contactList.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">暂无联系人</div>
-              ) : (
-                contactList.map((contact, index) => (
-                  <div
-                    key={index}
-                    className="p-4 hover:bg-gray-50 flex items-center justify-between"
-                  >
-                    <span className="font-medium text-gray-900">
-                      {contact.name}
-                    </span>
-                    <span className="text-gray-600">{contact.phoneNumber}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+        {activeTab === "contact" && <ContactTab contactList={contactList} />}
 
-        {/* 电量Tab */}
-        {activeTab === "battery" && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">
-              电量状态
-            </h3>
-            {battery ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-blue-600">
-                    {battery.level}%
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">电量</p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <p className="text-xl font-semibold text-gray-900">
-                    {battery.status === 2
-                      ? "放电中"
-                      : battery.status === 3
-                        ? "满电"
-                        : "充电中"}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">状态</p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <p className="text-xl font-semibold text-gray-900">
-                    {battery.temperature / 10}°C
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">温度</p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <p className="text-xl font-semibold text-gray-600">
-                    {battery.voltage}mV
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">电压</p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 py-8">
-                无法获取电量信息
-              </div>
-            )}
-          </div>
-        )}
+        {activeTab === "battery" && <BatteryTab battery={battery} />}
 
-        {/* 位置Tab */}
-        {activeTab === "location" && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">
-              位置信息
-            </h3>
-            {location ? (
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-500 mb-1">地址</p>
-                  <p className="text-gray-900">
-                    {location.address || "未知地址"}
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-500 mb-1">纬度</p>
-                    <p className="text-gray-900">{location.latitude}</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-500 mb-1">经度</p>
-                    <p className="text-gray-900">{location.longitude}</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-500 mb-1">精度</p>
-                    <p className="text-gray-900">{location.accuracy}米</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-500 mb-1">更新时间</p>
-                    <p className="text-gray-900">
-                      {new Date(location.time).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 py-8">
-                无法获取位置信息
-              </div>
-            )}
-          </div>
-        )}
+        {activeTab === "location" && <LocationTab location={location} />}
       </main>
 
       {/* 发送短信弹窗 */}
@@ -695,229 +290,5 @@ export default function DeviceDetailPage() {
         <WolForm device={device} onSuccess={() => setShowWolModal(false)} />
       </Modal>
     </div>
-  );
-}
-
-// 发送短信表单组件
-function SendSmsForm({
-  device,
-  onSuccess,
-}: {
-  device: DeviceRecord;
-  onSuccess: () => void;
-}) {
-  const [simSlot, setSimSlot] = useState(1);
-  const [phoneNumbers, setPhoneNumbers] = useState("");
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    const result = await sendSms(device, {
-      sim_slot: simSlot,
-      phone_numbers: phoneNumbers,
-      msg_content: content,
-    });
-    if (result.code === 200) {
-      onSuccess();
-    } else {
-      setError(result.msg || "发送失败");
-    }
-    setLoading(false);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          SIM卡槽
-        </label>
-        <select
-          value={simSlot}
-          onChange={(e) => setSimSlot(parseInt(e.target.value))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-        >
-          <option value={1}>SIM1</option>
-          <option value={2}>SIM2</option>
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          接收号码
-        </label>
-        <input
-          type="text"
-          value={phoneNumbers}
-          onChange={(e) => setPhoneNumbers(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          placeholder="多个号码用分号分隔"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          短信内容
-        </label>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          rows={4}
-          required
-        />
-      </div>
-      {error && <div className="text-red-500 text-sm">{error}</div>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-      >
-        {loading ? "发送中..." : "发送"}
-      </button>
-    </form>
-  );
-}
-
-// 添加联系人表单组件
-function AddContactForm({
-  device,
-  onSuccess,
-}: {
-  device: DeviceRecord;
-  onSuccess: () => void;
-}) {
-  const [name, setName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    const result = await addContact(device, { name, phoneNumber });
-    if (result.code === 200) {
-      onSuccess();
-    } else {
-      setError(result.msg || "添加失败");
-    }
-    setLoading(false);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          联系人姓名
-        </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          电话号码
-        </label>
-        <input
-          type="text"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          placeholder="多个号码用分号分隔"
-          required
-        />
-      </div>
-      {error && <div className="text-red-500 text-sm">{error}</div>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-      >
-        {loading ? "添加中..." : "添加"}
-      </button>
-    </form>
-  );
-}
-
-// WOL唤醒表单组件
-function WolForm({
-  device,
-  onSuccess,
-}: {
-  device: DeviceRecord;
-  onSuccess: () => void;
-}) {
-  const [mac, setMac] = useState("");
-  const [ip, setIp] = useState("255.255.255.255");
-  const [port, setPort] = useState("9");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    const result = await sendWol(device, { mac, ip, port: parseInt(port) });
-    if (result.code === 200) {
-      onSuccess();
-    } else {
-      setError(result.msg || "发送失败");
-    }
-    setLoading(false);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          MAC地址
-        </label>
-        <input
-          type="text"
-          value={mac}
-          onChange={(e) => setMac(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          placeholder="例如：AA:BB:CC:DD:EE:FF"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          广播IP
-        </label>
-        <input
-          type="text"
-          value={ip}
-          onChange={(e) => setIp(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          端口
-        </label>
-        <input
-          type="number"
-          value={port}
-          onChange={(e) => setPort(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-        />
-      </div>
-      {error && <div className="text-red-500 text-sm">{error}</div>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-      >
-        {loading ? "发送中..." : "发送唤醒包"}
-      </button>
-    </form>
   );
 }
