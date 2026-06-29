@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { login } from "@/actions/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,12 +17,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      router.push("/");
+      const result = await login(email, password);
+      if (result.success) {
+        router.push("/");
+      } else {
+        setError(result.error || "登录失败");
+      }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "登录失败，请检查用户名和密码",
-      );
+      setError(err instanceof Error ? err.message : "登录失败");
     } finally {
       setLoading(false);
     }

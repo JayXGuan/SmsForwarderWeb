@@ -1,61 +1,78 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import pb from "@/lib/pocketbase";
-import { useAuth } from "@/context/AuthContext";
+import { isLoggedIn, logout } from "@/actions/auth";
+import { getDevices, addDevice, deleteDevice } from "@/actions/devices";
 import DeviceCard from "@/components/devices/DeviceCard";
 import AddDeviceModal from "@/components/devices/AddDeviceModal";
 import Loading from "@/components/shared/Loading";
 import type { DeviceRecord } from "@/types";
 
 export default function HomePage() {
-  const { isLoggedIn, loading: authLoading, logout } = useAuth();
+  const [isAuth, setIsAuth] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [devices, setDevices] = useState<DeviceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const router = useRouter();
 
+  // 检查登录状态
   useEffect(() => {
-    if (!authLoading && !isLoggedIn) {
-      router.push("/login");
-    }
-  }, [authLoading, isLoggedIn, router]);
+    const checkAuth = async () => {
+      const auth = await isLoggedIn();
+      setIsAuth(auth);
+      setAuthLoading(false);
+      if (!auth) {
+        router.push("/login");
+      }
+    };
+    checkAuth();
+  }, [router]);
 
-  const fetchDevices = useCallback(async () => {
-    try {
-      const records = await pb.collection("devices").getFullList({
-        sort: "-created",
-      });
-      setDevices(records as unknown as DeviceRecord[]);
-    } catch (error) {
-      console.error("Failed to fetch devices:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // 获取设备列表
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isAuth) {
+      const fetchDevices = async () => {
+        setLoading(true);
+        const result = await getDevices();
+        if (result.success) {
+          setDevices(result.data);
+        }
+        setLoading(false);
+      };
       fetchDevices();
     }
-  }, [isLoggedIn, fetchDevices]);
+  }, [isAuth]);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   const handleAddDevice = async (
     deviceData: Omit<DeviceRecord, "id" | "user" | "created" | "updated">,
   ) => {
-    await pb.collection("devices").create(deviceData);
-    await fetchDevices();
+    const result = await addDevice(deviceData);
+    if (result.success) {
+      const devicesResult = await getDevices();
+      if (devicesResult.success) {
+        setDevices(devicesResult.data);
+      }
+      setShowAddModal(false);
+    }
   };
 
   const handleDeleteDevice = async (id: string) => {
     if (confirm("确定要删除这个设备吗？")) {
-      await pb.collection("devices").delete(id);
-      setDevices(devices.filter((d) => d.id !== id));
+      const result = await deleteDevice(id);
+      if (result.success) {
+        setDevices(devices.filter((d) => d.id !== id));
+      }
     }
   };
 
-  if (authLoading || !isLoggedIn) {
+  if (authLoading || !isAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loading text="加载中..." />
@@ -93,7 +110,7 @@ export default function HomePage() {
               </div>
             </div>
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
             >
               退出登录

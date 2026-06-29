@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import pb from "@/lib/pocketbase";
-import { useAuth } from "@/context/AuthContext";
+import { isLoggedIn, logout } from "@/actions/auth";
+import { getDevice } from "@/actions/devices";
 import {
   queryConfig,
   querySms,
@@ -14,12 +14,11 @@ import {
   sendSms,
   addContact,
   sendWol,
-} from "@/lib/deviceApi";
+} from "@/actions/deviceApi";
 import Loading from "@/components/shared/Loading";
 import Modal from "@/components/shared/Modal";
 import type {
   DeviceRecord,
-  ConfigQueryData,
   SmsInfo,
   CallInfo,
   ContactInfo,
@@ -31,10 +30,11 @@ import type {
 export default function DeviceDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { isLoggedIn, loading: authLoading, logout } = useAuth();
 
+  const [isAuth, setIsAuth] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [device, setDevice] = useState<DeviceRecord | null>(null);
-  const [config, setConfig] = useState<ConfigQueryData | null>(null);
+  const [config, setConfig] = useState<Record<string, unknown> | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,109 +51,89 @@ export default function DeviceDetailPage() {
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showWolModal, setShowWolModal] = useState(false);
 
+  // 检查登录状态
   useEffect(() => {
-    if (!authLoading && !isLoggedIn) {
-      router.push("/login");
-    }
-  }, [authLoading, isLoggedIn, router]);
-
-  const fetchDevice = useCallback(async () => {
-    if (!id) return;
-    try {
-      const record = await pb.collection("devices").getOne(id as string);
-      setDevice(record as unknown as DeviceRecord);
-
-      // 获取设备配置
-      const configResult = await queryConfig(record as unknown as DeviceRecord);
-      if (configResult.code === 200 && configResult.data) {
-        setConfig(configResult.data);
+    const checkAuth = async () => {
+      const auth = await isLoggedIn();
+      setIsAuth(auth);
+      setAuthLoading(false);
+      if (!auth) {
+        router.push("/login");
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "获取设备信息失败");
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+    };
+    checkAuth();
+  }, [router]);
 
+  // 获取设备信息
   useEffect(() => {
-    if (isLoggedIn && id) {
+    if (isAuth && id) {
+      const fetchDevice = async () => {
+        setLoading(true);
+        const result = await getDevice(id as string);
+        if (result.success && result.data) {
+          setDevice(result.data);
+          // 获取设备配置
+          const configResult = await queryConfig(result.data);
+          if (configResult.code === 200 && configResult.data) {
+            setConfig(configResult.data);
+          }
+        } else {
+          setError(result.error || "获取设备信息失败");
+        }
+        setLoading(false);
+      };
       fetchDevice();
     }
-  }, [isLoggedIn, id, fetchDevice]);
+  }, [isAuth, id]);
 
   // 加载各类数据
   const loadSmsList = async (type: number = 1) => {
     if (!device) return;
-    try {
-      const result = await querySms(device, {
-        type,
-        page_num: 1,
-        page_size: 20,
-      });
-      if (result.code === 200 && result.data) {
-        setSmsList(result.data);
-      }
-    } catch (err) {
-      console.error("Failed to load SMS:", err);
+    const result = await querySms(device, { type, page_num: 1, page_size: 20 });
+    if (result.code === 200 && result.data) {
+      setSmsList(result.data as SmsInfo[]);
     }
   };
 
   const loadCallList = async (type: number = 1) => {
     if (!device) return;
-    try {
-      const result = await queryCall(device, {
-        type,
-        page_num: 1,
-        page_size: 20,
-      });
-      if (result.code === 200 && result.data) {
-        setCallList(result.data);
-      }
-    } catch (err) {
-      console.error("Failed to load calls:", err);
+    const result = await queryCall(device, {
+      type,
+      page_num: 1,
+      page_size: 20,
+    });
+    if (result.code === 200 && result.data) {
+      setCallList(result.data as CallInfo[]);
     }
   };
 
   const loadContactList = async () => {
     if (!device) return;
-    try {
-      const result = await queryContact(device, { page_num: 1, page_size: 50 });
-      if (result.code === 200 && result.data) {
-        setContactList(result.data);
-      }
-    } catch (err) {
-      console.error("Failed to load contacts:", err);
+    const result = await queryContact(device, { page_num: 1, page_size: 50 });
+    if (result.code === 200 && result.data) {
+      setContactList(result.data as ContactInfo[]);
     }
   };
 
   const loadBattery = async () => {
     if (!device) return;
-    try {
-      const result = await queryBattery(device);
-      if (result.code === 200 && result.data) {
-        setBattery(result.data);
-      }
-    } catch (err) {
-      console.error("Failed to load battery:", err);
+    const result = await queryBattery(device);
+    if (result.code === 200 && result.data) {
+      setBattery(result.data as BatteryInfo);
     }
   };
 
   const loadLocation = async () => {
     if (!device) return;
-    try {
-      const result = await queryLocation(device);
-      if (result.code === 200 && result.data) {
-        setLocation(result.data);
-      }
-    } catch (err) {
-      console.error("Failed to load location:", err);
+    const result = await queryLocation(device);
+    if (result.code === 200 && result.data) {
+      setLocation(result.data as LocationInfo);
     }
   };
 
   // Tab切换时加载对应数据
   useEffect(() => {
     if (!device || activeTab === "overview") return;
-
     switch (activeTab) {
       case "sms":
         loadSmsList();
@@ -173,7 +153,12 @@ export default function DeviceDetailPage() {
     }
   }, [activeTab, device]);
 
-  if (authLoading || !isLoggedIn) {
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
+
+  if (authLoading || !isAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loading text="加载中..." />
@@ -204,6 +189,8 @@ export default function DeviceDetailPage() {
       </div>
     );
   }
+
+  const simInfoList = (config?.sim_info_list as Record<string, SimInfo>) || {};
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -255,7 +242,7 @@ export default function DeviceDetailPage() {
               </div>
             </div>
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
             >
               退出登录
@@ -326,23 +313,19 @@ export default function DeviceDetailPage() {
                 SIM 卡信息
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Object.entries(config.sim_info_list || {}).map(
-                  ([key, sim]: [string, SimInfo]) => (
-                    <div key={key} className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-900">
-                          SIM{parseInt(key) + 1}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {sim.mCarrierName}
-                        </span>
-                      </div>
-                      <p className="text-gray-600">
-                        {sim.mNumber || "未知号码"}
-                      </p>
+                {Object.entries(simInfoList).map(([key, sim]) => (
+                  <div key={key} className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-gray-900">
+                        SIM{parseInt(key) + 1}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {sim.mCarrierName}
+                      </span>
                     </div>
-                  ),
-                )}
+                    <p className="text-gray-600">{sim.mNumber || "未知号码"}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -592,7 +575,7 @@ export default function DeviceDetailPage() {
                   <p className="text-sm text-gray-500 mt-1">温度</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <p className="text-xl font-semibold text-gray-900">
+                  <p className="text-xl font-semibold text-gray-600">
                     {battery.voltage}mV
                   </p>
                   <p className="text-sm text-gray-500 mt-1">电压</p>
@@ -658,7 +641,6 @@ export default function DeviceDetailPage() {
       >
         <SendSmsForm
           device={device}
-          config={config}
           onSuccess={() => setShowSendSmsModal(false)}
         />
       </Modal>
@@ -693,11 +675,9 @@ export default function DeviceDetailPage() {
 // 发送短信表单组件
 function SendSmsForm({
   device,
-  config,
   onSuccess,
 }: {
   device: DeviceRecord;
-  config: ConfigQueryData | null;
   onSuccess: () => void;
 }) {
   const [simSlot, setSimSlot] = useState(1);
@@ -710,22 +690,17 @@ function SendSmsForm({
     e.preventDefault();
     setLoading(true);
     setError("");
-    try {
-      const result = await sendSms(device, {
-        sim_slot: simSlot,
-        phone_numbers: phoneNumbers,
-        msg_content: content,
-      });
-      if (result.code === 200) {
-        onSuccess();
-      } else {
-        setError(result.msg || "发送失败");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "发送失败");
-    } finally {
-      setLoading(false);
+    const result = await sendSms(device, {
+      sim_slot: simSlot,
+      phone_numbers: phoneNumbers,
+      msg_content: content,
+    });
+    if (result.code === 200) {
+      onSuccess();
+    } else {
+      setError(result.msg || "发送失败");
     }
+    setLoading(false);
   };
 
   return (
@@ -797,18 +772,13 @@ function AddContactForm({
     e.preventDefault();
     setLoading(true);
     setError("");
-    try {
-      const result = await addContact(device, { name, phoneNumber });
-      if (result.code === 200) {
-        onSuccess();
-      } else {
-        setError(result.msg || "添加失败");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "添加失败");
-    } finally {
-      setLoading(false);
+    const result = await addContact(device, { name, phoneNumber });
+    if (result.code === 200) {
+      onSuccess();
+    } else {
+      setError(result.msg || "添加失败");
     }
+    setLoading(false);
   };
 
   return (
@@ -868,18 +838,13 @@ function WolForm({
     e.preventDefault();
     setLoading(true);
     setError("");
-    try {
-      const result = await sendWol(device, { mac, ip, port: parseInt(port) });
-      if (result.code === 200) {
-        onSuccess();
-      } else {
-        setError(result.msg || "发送失败");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "发送失败");
-    } finally {
-      setLoading(false);
+    const result = await sendWol(device, { mac, ip, port: parseInt(port) });
+    if (result.code === 200) {
+      onSuccess();
+    } else {
+      setError(result.msg || "发送失败");
     }
+    setLoading(false);
   };
 
   return (
