@@ -125,7 +125,7 @@ export async function addContact(
   device: Device,
   params: {
     name: string;
-    phoneNumber: string;
+    phone_number: string;
   },
 ) {
   return deviceRequest(device, "/contact/add", params);

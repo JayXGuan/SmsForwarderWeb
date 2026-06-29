@@ -331,7 +331,7 @@ sign = calc_sign(timestamp, "your_sign_key")
   "data": [
     {
       "name": "联系人姓名",
-      "phoneNumber": "13800138000"
+      "phone_number": "13800138000"
     }
   ],
   "timestamp": 1782720009000
@@ -346,10 +346,10 @@ sign = calc_sign(timestamp, "your_sign_key")
 
 **请求参数**:
 
-| 参数名      | 类型   | 必填 | 说明                         |
-| ----------- | ------ | ---- | ---------------------------- |
-| name        | String | 是   | 联系人姓名                   |
-| phoneNumber | String | 是   | 电话号码，多个号码用分号分隔 |
+| 参数名       | 类型   | 必填 | 说明                         |
+| ------------ | ------ | ---- | ---------------------------- |
+| name         | String | 是   | 联系人姓名                   |
+| phone_number | String | 是   | 电话号码，多个号码用分号分隔 |
 
 **请求示例**:
 
@@ -357,7 +357,7 @@ sign = calc_sign(timestamp, "your_sign_key")
 {
   "data": {
     "name": "新联系人",
-    "phoneNumber": "13800138000;13900139000"
+    "phone_number": "13800138000;13900139000"
   },
   "timestamp": 1782720009000,
   "sign": ""
@@ -642,10 +642,10 @@ sign = calc_sign(timestamp, "your_sign_key")
 
 ### ContactInfo (联系人信息)
 
-| 字段名      | 类型   | 说明       |
-| ----------- | ------ | ---------- |
-| name        | String | 联系人姓名 |
-| phoneNumber | String | 电话号码   |
+| 字段名       | 类型   | 说明       |
+| ------------ | ------ | ---------- |
+| name         | String | 联系人姓名 |
+| phone_number | String | 电话号码   |
 
 ### BatteryInfo (电量信息)
 

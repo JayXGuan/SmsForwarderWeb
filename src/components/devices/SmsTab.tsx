@@ -89,10 +89,12 @@ export default function SmsTab({ device }: SmsTabProps) {
             <div key={index} className="p-4 hover:bg-gray-50">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-gray-900">
-                  {sms.name || "未知联系人"}{" "}
-                  <span className="text-xs text-gray-500 font-normal">
-                    ({sms.number})
-                  </span>
+                  {sms.number}
+                  {sms.name && (
+                    <span className="text-xs text-gray-500 font-normal ml-1">
+                      ({sms.name})
+                    </span>
+                  )}
                 </span>
                 <span className="text-xs text-gray-500">
                   {new Date(sms.date).toLocaleString()}

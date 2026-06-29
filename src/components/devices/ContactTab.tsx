@@ -43,6 +43,7 @@ export default function ContactTab({ device }: ContactTabProps) {
     setPageNum(nextPage);
     loadContactList(nextPage);
   };
+  console.log("contactList", contactList);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -59,7 +60,7 @@ export default function ContactTab({ device }: ContactTabProps) {
               className="p-4 hover:bg-gray-50 flex items-center justify-between"
             >
               <span className="font-medium text-gray-900">{contact.name}</span>
-              <span className="text-gray-600">{contact.phoneNumber}</span>
+              <span className="text-gray-600">{contact.phone_number}</span>
             </div>
           ))
         )}

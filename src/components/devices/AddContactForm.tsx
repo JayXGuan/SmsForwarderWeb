@@ -22,7 +22,10 @@ export default function AddContactForm({
     e.preventDefault();
     setLoading(true);
     setError("");
-    const result = await addContact(device, { name, phoneNumber });
+    const result = await addContact(device, {
+      name,
+      phone_number: phoneNumber,
+    });
     if (result.code === 200) {
       onSuccess();
     } else {

@@ -53,7 +53,7 @@ export default function CallTab({ device }: CallTabProps) {
     setPageNum(nextPage);
     loadCallList(activeType, nextPage);
   };
-
+  console.log("callList", callList);
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
@@ -99,7 +99,12 @@ export default function CallTab({ device }: CallTabProps) {
             <div key={index} className="p-4 hover:bg-gray-50">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-gray-900">
-                  {call.name || call.number}
+                  {call.number}
+                  {call.name && (
+                    <span className="text-xs text-gray-500 font-normal ml-1">
+                      ({call.name})
+                    </span>
+                  )}
                 </span>
                 <span className="text-xs text-gray-500">
                   {new Date(call.dateLong).toLocaleString()}

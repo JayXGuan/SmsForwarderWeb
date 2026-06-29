@@ -83,7 +83,7 @@ export interface CallInfo {
 // ContactInfo 联系人信息
 export interface ContactInfo {
   name: string;
-  phoneNumber: string;
+  phone_number: string;
 }
 
 // BatteryInfo 电量信息
@@ -141,7 +141,7 @@ export interface SmsSendParams {
 
 export interface ContactAddParams {
   name: string;
-  phoneNumber: string;
+  phone_number: string;
 }
 
 export interface WolSendParams {
