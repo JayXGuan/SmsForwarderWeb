@@ -15,6 +15,7 @@ import CallTab from "@/components/devices/CallTab";
 import ContactTab from "@/components/devices/ContactTab";
 import BatteryTab from "@/components/devices/BatteryTab";
 import LocationTab from "@/components/devices/LocationTab";
+import CloneTab from "@/components/devices/CloneTab";
 import SendSmsForm from "@/components/devices/SendSmsForm";
 import AddContactForm from "@/components/devices/AddContactForm";
 import WolForm from "@/components/devices/WolForm";
@@ -136,6 +137,10 @@ export default function DeviceDetailPage() {
         {activeTab === "battery" && <BatteryTab device={device} />}
 
         {activeTab === "location" && <LocationTab device={device} />}
+
+        {activeTab === "clone" && config && (
+          <CloneTab device={device} config={config} />
+        )}
       </main>
 
       {/* 发送短信弹窗 */}

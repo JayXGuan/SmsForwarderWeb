@@ -28,6 +28,7 @@ export default function DeviceTabNav({
       enabled: config?.enable_api_battery_query,
     },
     { key: "location", label: "位置", enabled: config?.enable_api_location },
+    // { key: "clone", label: "克隆配置", enabled: config?.enable_api_clone },
   ];
 
   return (

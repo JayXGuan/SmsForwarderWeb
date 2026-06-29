@@ -152,3 +152,18 @@ export async function sendWol(
 ) {
   return deviceRequest(device, "/wol/send", params);
 }
+
+// 拉取克隆配置
+export async function clonePull(
+  device: Device,
+  params: {
+    version_code: number;
+    // version_name: string;
+  },
+) {
+  return deviceRequest<Record<string, unknown>>(device, "/clone/pull", {
+    version_code: params.version_code,
+    // version_name: params.version_name,
+    // settings: {},
+  });
+}
