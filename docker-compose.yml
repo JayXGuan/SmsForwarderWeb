@@ -1,0 +1,24 @@
+services:
+  smsforwarder:
+    image: smsforwarder:latest
+    container_name: smsforwarder
+    restart: on-failure:3
+    ports:
+      - "5000:5000"
+    environment:
+      # Application Configuration
+      - NODE_ENV=production
+    volumes:
+      - smsforwarder_data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - baota_net
+
+volumes:
+  smsforwarder_data:
+    name: smsforwarder_data
+
+networks:
+  baota_net:
+    external: true
