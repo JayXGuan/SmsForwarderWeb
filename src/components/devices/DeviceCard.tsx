@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { queryConfig } from "@/lib/deviceApi";
+import { queryConfig } from "@/actions/deviceApi";
 import type { DeviceRecord, ConfigQueryData, SimInfo } from "@/types";
 
 interface DeviceCardProps {

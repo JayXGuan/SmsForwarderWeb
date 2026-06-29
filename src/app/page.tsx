@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { isLoggedIn, logout } from "@/actions/auth";
-import { getDevices, addDevice, deleteDevice } from "@/actions/devices";
+import { getDevices, createDevice, deleteDevice } from "@/actions/devices";
 import DeviceCard from "@/components/devices/DeviceCard";
 import AddDeviceModal from "@/components/devices/AddDeviceModal";
 import Loading from "@/components/shared/Loading";
@@ -53,7 +53,7 @@ export default function HomePage() {
   const handleAddDevice = async (
     deviceData: Omit<DeviceRecord, "id" | "user" | "created" | "updated">,
   ) => {
-    const result = await addDevice(deviceData);
+    const result = await createDevice(deviceData);
     if (result.success) {
       const devicesResult = await getDevices();
       if (devicesResult.success) {

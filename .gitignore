@@ -40,6 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# PocketBase
-/pb/
-/pb_data/
+# SQLite 数据库
+/data/

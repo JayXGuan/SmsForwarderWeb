@@ -1,6 +1,6 @@
 "use server";
 
-import type { DeviceRecord, ApiResponse } from "@/types";
+import type { DeviceRecord, ApiResponse, ConfigQueryData } from "@/types";
 
 // 通用请求函数
 async function deviceRequest<T>(
@@ -65,7 +65,7 @@ async function calcSign(timestamp: number, signKey: string): Promise<string> {
 
 // 查询服务器配置
 export async function queryConfig(device: DeviceRecord) {
-  return deviceRequest<Record<string, unknown>>(device, "/config/query");
+  return deviceRequest<ConfigQueryData>(device, "/config/query");
 }
 
 // 发送短信

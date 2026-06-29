@@ -1,10 +1,10 @@
 # SmsForwarder Web 管理端
 
-基于 Next.js 和 PocketBase 的短信转发设备管理平台。
+基于 Next.js 和 SQLite 的短信转发设备管理平台。
 
 ## 功能特性
 
-- 🔐 强登录认证（基于 PocketBase）
+- 🔐 强登录认证（首次访问自动引导注册）
 - 📱 多设备管理
 - 📨 短信查询与发送
 - 📞 通话记录查询
@@ -15,9 +15,9 @@
 
 ## 技术栈
 
-- **前端**: Next.js 14+ (App Router)
+- **前端**: Next.js 16+ (App Router)
 - **样式**: Tailwind CSS
-- **后端**: PocketBase
+- **数据库**: SQLite (better-sqlite3)
 - **语言**: TypeScript
 
 ## 快速开始
@@ -26,84 +26,81 @@
 
 ```bash
 npm install
-# 或
-pnpm install
 ```
 
 ### 2. 启动开发服务器
-
-本项目已集成 PocketBase，启动时会自动下载并运行 PocketBase 服务：
 
 ```bash
 npm run dev
 ```
 
-此命令会同时启动：
+### 3. 初始化系统
 
-- **Next.js** 开发服务器 (端口 3000)
-- **PocketBase** 服务 (端口 8090)
+首次访问时，系统会检测是否存在用户。如果没有用户，会自动显示"初始化系统"页面：
 
-首次运行时，脚本会自动下载适合您系统的 PocketBase 可执行文件。
+1. 输入管理员邮箱
+2. 设置密码（至少6位）
+3. 确认密码
+4. 点击"创建管理员账户"
 
-### 3. 配置 PocketBase
+创建成功后会自动登录并跳转到主页。
 
-访问 `http://127.0.0.1:8090/_/` 进入管理后台，完成以下配置：
+### 4. 后续登录
 
-#### 创建用户集合 (users)
+系统初始化后，访问时会显示正常的登录页面，使用创建的管理员账户登录即可。
 
-在 Collections 中创建 `users` 集合（如果不存在）。
+## 数据存储
 
-#### 创建设备集合 (devices)
+数据存储在项目根目录的 `data/` 目录下：
 
-创建 `devices` 集合，字段如下：
+- `data/sms_forwarder.db` - SQLite 数据库文件
 
-| 字段名        | 类型     | 说明                       |
-| ------------- | -------- | -------------------------- |
-| name          | text     | 设备名称                   |
-| ip            | text     | 设备 IP 地址               |
-| port          | number   | 端口号，默认 5000          |
-| sign_key      | text     | 签名密钥（可选）           |
-| security_mode | number   | 安全模式：0=无, 1=签名验证 |
-| user          | relation | 关联用户                   |
+数据库文件会被 `.gitignore` 忽略，不会提交到 Git。
 
-### 4. 配置环境变量（可选）
+## 数据库结构
 
-如果 PocketBase 运行在其他地址，创建 `.env.local` 文件：
+系统会自动创建以下表：
 
-```env
-NEXT_PUBLIC_POCKETBASE_URL=http://127.0.0.1:8090
-```
+### users（用户表）
 
-### 单独启动服务
+| 字段       | 类型     | 说明                |
+| ---------- | -------- | ------------------- |
+| id         | INTEGER  | 主键                |
+| email      | TEXT     | 邮箱（唯一）        |
+| password   | TEXT     | 密码（bcrypt 哈希） |
+| created_at | DATETIME | 创建时间            |
 
-如果需要单独启动某个服务：
+### devices（设备表）
 
-```bash
-# 只启动 Next.js
-npm run dev:next
+| 字段          | 类型     | 说明                         |
+| ------------- | -------- | ---------------------------- |
+| id            | INTEGER  | 主键                         |
+| name          | TEXT     | 设备名称                     |
+| ip            | TEXT     | 设备 IP 地址                 |
+| port          | INTEGER  | 端口号（默认 5000）          |
+| sign_key      | TEXT     | 签名密钥（可选）             |
+| security_mode | INTEGER  | 安全模式（0=无, 1=签名验证） |
+| user_id       | INTEGER  | 所属用户 ID                  |
+| created_at    | DATETIME | 创建时间                     |
 
-# 只启动 PocketBase (macOS/Linux)
-npm run dev:pocketbase
+### sessions（会话表）
 
-# 只启动 PocketBase (Windows)
-npm run dev:pocketbase:win
-```
-
-访问 `http://localhost:3000` 查看 Next.js 应用。
-访问 `http://127.0.0.1:8090/_/` 查看 PocketBase 管理后台。
+| 字段       | 类型     | 说明               |
+| ---------- | -------- | ------------------ |
+| id         | TEXT     | Session ID（UUID） |
+| user_id    | INTEGER  | 用户 ID            |
+| expires_at | DATETIME | 过期时间（7天）    |
+| created_at | DATETIME | 创建时间           |
 
 ## 项目结构
 
 ```
 SmsForwarderWeb/
-├── pb/                     # PocketBase 可执行文件目录 (gitignore)
-├── pb_data/                # PocketBase 数据目录 (gitignore)
-├── scripts/                # 启动脚本
-│   ├── start-pocketbase.sh # macOS/Linux 启动脚本
-│   └── start-pocketbase.bat# Windows 启动脚本
+├── data/                   # SQLite 数据库目录（gitignore）
+│   └── sms_forwarder.db    # 数据库文件
 ├── src/
 │   ├── app/                # Next.js App Router
-│   │   ├── login/          # 登录页面
+│   │   ├── login/          # 登录/初始化页面
 │   │   ├── devices/[id]/   # 设备详情页
 │   │   ├── layout.tsx      # 根布局
 │   │   └── page.tsx        # 首页（设备列表）
@@ -115,7 +112,7 @@ SmsForwarderWeb/
 │   │   ├── devices.ts      # 设备管理
 │   │   └── deviceApi.ts    # 设备 API 调用
 │   ├── lib/                # 工具库
-│   │   └── pocketbase.ts   # PocketBase 客户端
+│   │   └── db.ts           # SQLite 数据库模块
 │   └── types/              # TypeScript 类型定义
 │       └── index.ts
 └── ...
