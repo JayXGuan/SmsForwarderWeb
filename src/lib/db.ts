@@ -57,11 +57,23 @@ function initDatabase() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
+
+  // 单卡多副卡配置表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS multi_sim_config (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      main_number TEXT NOT NULL,
+      sub_type TEXT DEFAULT 'multi',
+      sub_numbers TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
 }
 
 // 仅在数据库文件不存在时初始化
-if (!dbExists) {
-  initDatabase();
-}
+initDatabase();
+
 
 export default db;

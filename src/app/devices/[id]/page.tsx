@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { isLoggedIn } from "@/actions/auth";
 import { getDevice, type Device } from "@/actions/devices";
+import { getMultiSimConfigs } from "@/actions/multiSimConfigs";
 import { queryConfig } from "@/actions/deviceApi";
 import Loading from "@/components/shared/Loading";
 import Modal from "@/components/shared/Modal";
@@ -19,7 +20,7 @@ import CloneTab from "@/components/devices/CloneTab";
 import SendSmsForm from "@/components/devices/SendSmsForm";
 import AddContactForm from "@/components/devices/AddContactForm";
 import WolForm from "@/components/devices/WolForm";
-import type { ConfigQueryData } from "@/types";
+import type { ConfigQueryData, MultiSimConfig } from "@/types";
 
 export default function DeviceDetailPage() {
   const { id } = useParams();
@@ -29,6 +30,7 @@ export default function DeviceDetailPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [device, setDevice] = useState<Device | null>(null);
   const [config, setConfig] = useState<ConfigQueryData | null>(null);
+  const [multiSimConfigs, setMultiSimConfigs] = useState<MultiSimConfig[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,11 +53,12 @@ export default function DeviceDetailPage() {
     checkAuth();
   }, [router]);
 
-  // 获取设备信息
+  // 获取设备信息和单卡多副卡配置
   useEffect(() => {
     if (isAuth && id) {
       const fetchDevice = async () => {
         setLoading(true);
+        // 获取设备信息
         const result = await getDevice(Number(id));
         if (result.success && result.data) {
           setDevice(result.data);
@@ -68,6 +71,13 @@ export default function DeviceDetailPage() {
           }
         } else {
           setError(result.error || "获取设备信息失败");
+        }
+        // 获取单卡多副卡配置
+        const configsResult = await getMultiSimConfigs();
+        console.log('configsResult',configsResult);
+        
+        if (configsResult.success) {
+          setMultiSimConfigs(configsResult.data);
         }
         setLoading(false);
       };
@@ -153,6 +163,8 @@ export default function DeviceDetailPage() {
       >
         <SendSmsForm
           device={device}
+          config={config}
+          multiSimConfigs={multiSimConfigs}
           onSuccess={() => setShowSendSmsModal(false)}
         />
       </Modal>

@@ -110,6 +110,23 @@ export interface LocationInfo {
   address: string;
 }
 
+// MultiSimConfig 单卡多副卡配置
+export interface MultiSimConfig {
+  id: number;
+  user_id: number;
+  main_number: string;
+  sub_type: string;
+  sub_numbers: string; // JSON 字符串，存储副号数组
+  created_at: string;
+}
+
+// MultiSimConfigFormData 单卡多副卡配置表单数据
+export interface MultiSimConfigFormData {
+  main_number: string;
+  sub_type: string;
+  sub_numbers: string[];
+}
+
 // 查询参数类型
 export interface SmsQueryParams {
   type?: number;

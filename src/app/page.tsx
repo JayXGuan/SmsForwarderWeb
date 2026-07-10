@@ -4,17 +4,27 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useDevices, type DeviceFormData } from "@/hooks/useDevices";
+import { useMultiSimConfigs } from "@/hooks/useMultiSimConfigs";
 import type { Device } from "@/actions/devices";
 import AppHeader from "@/components/shared/AppHeader";
 import DeviceList from "@/components/devices/DeviceList";
 import AddDeviceModal from "@/components/devices/AddDeviceModal";
+import MultiSimConfigModal from "@/components/devices/MultiSimConfigModal";
 import Loading from "@/components/shared/Loading";
 
 export default function HomePage() {
   const { isAuth, authLoading } = useAuth();
   const { devices, loading, addDevice, editDevice, removeDevice } =
     useDevices(isAuth);
+  const {
+    configs: multiSimConfigs,
+    loading: configLoading,
+    addConfig,
+    editConfig,
+    removeConfig,
+  } = useMultiSimConfigs(isAuth);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
   const [editingDevice, setEditingDevice] = useState<Device | null>(null);
   const router = useRouter();
 
@@ -27,6 +37,10 @@ export default function HomePage() {
     setShowAddModal(true);
   };
 
+  const handleOpenConfig = () => {
+    setShowConfigModal(true);
+  };
+
   const handleEdit = (device: Device) => {
     setEditingDevice(device);
     setShowAddModal(true);
@@ -35,6 +49,10 @@ export default function HomePage() {
   const handleCloseModal = () => {
     setShowAddModal(false);
     setEditingDevice(null);
+  };
+
+  const handleCloseConfigModal = () => {
+    setShowConfigModal(false);
   };
 
   const handleSubmit = async (data: DeviceFormData) => {
@@ -71,25 +89,52 @@ export default function HomePage() {
             <h2 className="text-2xl font-bold text-gray-900">设备列表</h2>
             <p className="text-gray-500 mt-1">共 {devices.length} 台设备</p>
           </div>
-          <button
-            onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex gap-3">
+            <button
+              onClick={handleOpenConfig}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            添加设备
-          </button>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.74 3.258.406 3.258 2.073a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.74 1.543-.406 3.258-2.073 3.258a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.74-3.258-.406-3.258-2.073a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.74-1.543.406-3.258 2.073-3.258a1.724 1.724 0 002.573-1.066z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              单卡多副卡配置
+            </button>
+            <button
+              onClick={handleOpenAdd}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              添加设备
+            </button>
+          </div>
         </div>
 
         <DeviceList
@@ -106,6 +151,16 @@ export default function HomePage() {
         onClose={handleCloseModal}
         onSubmit={handleSubmit}
         editDevice={editingDevice}
+      />
+
+      <MultiSimConfigModal
+        isOpen={showConfigModal}
+        onClose={handleCloseConfigModal}
+        configs={multiSimConfigs}
+        onAdd={addConfig}
+        onEdit={editConfig}
+        onDelete={removeConfig}
+        loading={configLoading}
       />
     </div>
   );
