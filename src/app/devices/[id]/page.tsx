@@ -134,6 +134,7 @@ export default function DeviceDetailPage() {
         {activeTab === "overview" && config && (
           <OverviewTab
             config={config}
+            multiSimConfigs={multiSimConfigs}
             onSendSms={() => setShowSendSmsModal(true)}
             onAddContact={() => setShowAddContactModal(true)}
             onWol={() => setShowWolModal(true)}

@@ -1,9 +1,12 @@
 "use client";
 
-import type { ConfigQueryData, SimInfo } from "@/types";
+import type { ConfigQueryData, SimInfo, MultiSimConfig } from "@/types";
+import { findMatchingMultiSimConfig, getSimNumber } from "@/lib/multiSimUtils";
+import SubNumberInfoBadge from "@/components/devices/SubNumberInfoBadge";
 
 interface OverviewTabProps {
   config: ConfigQueryData;
+  multiSimConfigs?: MultiSimConfig[];
   onSendSms: () => void;
   onAddContact: () => void;
   onWol: () => void;
@@ -11,11 +14,26 @@ interface OverviewTabProps {
 
 export default function OverviewTab({
   config,
+  multiSimConfigs = [],
   onSendSms,
   onAddContact,
   onWol,
 }: OverviewTabProps) {
   const simInfoList = config.sim_info_list || {};
+
+  /**
+   * 获取 SIM 卡匹配的副卡配置
+   */
+  const getMatchedConfig = (simSlot: number): MultiSimConfig | null => {
+    if (multiSimConfigs.length === 0) return null;
+    const simNumber = getSimNumber(
+      config.sim_info_list,
+      simSlot,
+      config.extra_sim1,
+      config.extra_sim2,
+    );
+    return findMatchingMultiSimConfig(simNumber, multiSimConfigs);
+  };
 
   return (
     <div className="space-y-6">
@@ -29,6 +47,7 @@ export default function OverviewTab({
             const extraSim = config[
               `extra_sim${simIndex}` as keyof ConfigQueryData
             ] as string;
+            const matchedConfig = getMatchedConfig(simIndex);
             return (
               <div key={key} className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -47,6 +66,7 @@ export default function OverviewTab({
                     sim_info: {simInfo.number}
                   </p>
                 )}
+                {matchedConfig && <SubNumberInfoBadge config={matchedConfig} />}
               </div>
             );
           })}

@@ -3,8 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { queryConfig } from "@/actions/deviceApi";
+import { getMultiSimConfigs } from "@/actions/multiSimConfigs";
 import type { Device } from "@/actions/devices";
-import type { ConfigQueryData, SimInfo } from "@/types";
+import type { ConfigQueryData, SimInfo, MultiSimConfig } from "@/types";
+import { findMatchingMultiSimConfig, getSimNumber } from "@/lib/multiSimUtils";
+import SubNumberInfoBadge from "@/components/devices/SubNumberInfoBadge";
 
 interface DeviceCardProps {
   device: Device;
@@ -19,8 +22,10 @@ export default function DeviceCard({
 }: DeviceCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [config, setConfig] = useState<ConfigQueryData | null>(null);
+  const [multiSimConfigs, setMultiSimConfigs] = useState<MultiSimConfig[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const fetchConfig = async () => {
     if (loading) return;
     try {
@@ -31,6 +36,11 @@ export default function DeviceCard({
         setConfig(result.data);
       } else {
         setError(result.msg || "获取设备信息失败");
+      }
+      // 获取单卡多副卡配置
+      const configsResult = await getMultiSimConfigs();
+      if (configsResult.success) {
+        setMultiSimConfigs(configsResult.data);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "网络错误");
@@ -47,7 +57,20 @@ export default function DeviceCard({
   const handleToggle = () => {
     setExpanded(!expanded);
   };
-  console.log("config", config);
+
+  /**
+   * 获取 SIM 卡匹配的副卡配置
+   */
+  const getMatchedConfig = (simSlot: number): MultiSimConfig | null => {
+    if (!config || multiSimConfigs.length === 0) return null;
+    const simNumber = getSimNumber(
+      config.sim_info_list,
+      simSlot,
+      config.extra_sim1,
+      config.extra_sim2,
+    );
+    return findMatchingMultiSimConfig(simNumber, multiSimConfigs);
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
@@ -137,6 +160,7 @@ export default function DeviceCard({
                   const extraSim = config[
                     `extra_sim${simIndex}` as keyof ConfigQueryData
                   ] as string;
+                  const matchedConfig = getMatchedConfig(simIndex);
                   return (
                     <span
                       key={key}
@@ -148,6 +172,9 @@ export default function DeviceCard({
                         <span className="text-xs text-gray-400 ml-1">
                           ({sim.number})
                         </span>
+                      )}
+                      {matchedConfig && (
+                        <SubNumberInfoBadge config={matchedConfig} compact />
                       )}
                     </span>
                   );
@@ -197,6 +224,7 @@ export default function DeviceCard({
                       const extraSim = config[
                         `extra_sim${simIndex}` as keyof ConfigQueryData
                       ] as string;
+                      const matchedConfig = getMatchedConfig(simIndex);
                       return (
                         <div key={key} className="bg-gray-50 rounded-lg p-3">
                           <div className="flex items-center justify-between mb-2">
@@ -214,6 +242,9 @@ export default function DeviceCard({
                             <p className="text-xs text-gray-400">
                               sim_info: {sim.number}
                             </p>
+                          )}
+                          {matchedConfig && (
+                            <SubNumberInfoBadge config={matchedConfig} />
                           )}
                         </div>
                       );
