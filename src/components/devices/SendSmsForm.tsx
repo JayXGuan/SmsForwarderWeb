@@ -8,6 +8,7 @@ import {
   checkSubNumberSupport,
   parseSubNumbers,
   formatSubNumberPhone,
+  getFormatDescription,
 } from "@/lib/multiSimUtils";
 
 interface SendSmsFormProps {
@@ -21,7 +22,7 @@ interface SendSmsFormProps {
  * 短信发送表单
  *
  * 支持选择 SIM 卡槽，当 SIM 卡号码匹配单卡多副卡配置的主号时，
- * 可选择使用副号发送短信。副号发送时目标号码格式为：12583{副号序号}{原号码}
+ * 可选择使用副号发送短信。号码格式根据副号类型自动处理。
  */
 export default function SendSmsForm({
   device,
@@ -71,11 +72,11 @@ export default function SendSmsForm({
 
     // 处理目标号码：如果选择了副号，需要格式化号码
     let finalPhoneNumbers = phoneNumbers;
-    if (selectedSubIndex !== null && selectedSubIndex >= 1) {
+    if (matchedConfig && selectedSubIndex !== null && selectedSubIndex >= 1) {
       // 对每个号码进行格式化（支持分号分隔的多个号码）
       const numbers = phoneNumbers.split(";").filter((n) => n.trim());
       finalPhoneNumbers = numbers
-        .map((n) => formatSubNumberPhone(n.trim(), selectedSubIndex))
+        .map((n) => formatSubNumberPhone(matchedConfig, n.trim(), selectedSubIndex))
         .join(";");
     }
 
@@ -131,7 +132,7 @@ export default function SendSmsForm({
           </select>
           {selectedSubIndex !== null && (
             <p className="text-xs text-gray-500 mt-1.5">
-              目标号码将自动添加前缀 12583{selectedSubIndex}
+              {getFormatDescription(matchedConfig, selectedSubIndex)}
             </p>
           )}
         </div>

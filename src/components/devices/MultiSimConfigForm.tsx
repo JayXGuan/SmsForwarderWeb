@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import type { MultiSimConfig } from "@/types";
 import { parseSubNumbers } from "@/lib/multiSimUtils";
+import {
+  SUB_NUMBER_TYPES,
+  SUB_NUMBER_TYPE_NAMES,
+  ALL_SUB_NUMBER_TYPES,
+} from "@/lib/subNumberTypes";
 
 interface MultiSimConfigFormProps {
   config?: MultiSimConfig | null;
@@ -16,7 +21,7 @@ interface MultiSimConfigFormProps {
  *
  * 支持新增和编辑模式，表单字段包括：
  * - 主号（必填）
- * - 副号类型（目前只有多号类型）
+ * - 副号类型（目前支持移动和多号）
  * - 副号列表（可增删）
  */
 export default function MultiSimConfigForm({
@@ -26,7 +31,7 @@ export default function MultiSimConfigForm({
   loading,
 }: MultiSimConfigFormProps) {
   const [mainNumber, setMainNumber] = useState("");
-  const [subType, setSubType] = useState("multi");
+  const [subType, setSubType] = useState<string>(SUB_NUMBER_TYPES.CMCC_MULTI);
   const [subNumbers, setSubNumbers] = useState<string[]>([""]);
   const [error, setError] = useState("");
 
@@ -34,11 +39,11 @@ export default function MultiSimConfigForm({
   useEffect(() => {
     if (config) {
       setMainNumber(config.main_number);
-      setSubType(config.sub_type || "multi");
+      setSubType(config.sub_type || SUB_NUMBER_TYPES.CMCC_MULTI);
       setSubNumbers(parseSubNumbers(config.sub_numbers));
     } else {
       setMainNumber("");
-      setSubType("multi");
+      setSubType(SUB_NUMBER_TYPES.CMCC_MULTI);
       setSubNumbers([""]);
     }
     setError("");
@@ -109,9 +114,15 @@ export default function MultiSimConfigForm({
           onChange={(e) => setSubType(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="multi">多号类型</option>
+          {ALL_SUB_NUMBER_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {SUB_NUMBER_TYPE_NAMES[type]}
+            </option>
+          ))}
         </select>
-        <p className="text-xs text-gray-500 mt-1">目前仅支持多号类型</p>
+        <p className="text-xs text-gray-500 mt-1">
+          选择运营商提供的副号服务类型
+        </p>
       </div>
 
       {/* 副号列表 */}

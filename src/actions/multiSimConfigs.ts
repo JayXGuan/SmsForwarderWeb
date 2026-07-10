@@ -89,7 +89,7 @@ export async function createMultiSimConfig(
       .prepare(
         "INSERT INTO multi_sim_config (user_id, main_number, sub_type, sub_numbers) VALUES (?, ?, ?, ?)",
       )
-      .run(user.id, data.main_number, data.sub_type || "multi", subNumbersJson);
+      .run(user.id, data.main_number, data.sub_type || "cmcc_multi", subNumbersJson);
 
     const config = db
       .prepare("SELECT * FROM multi_sim_config WHERE id = ?")
@@ -137,7 +137,7 @@ export async function updateMultiSimConfig(
 
     db.prepare(
       "UPDATE multi_sim_config SET main_number = ?, sub_type = ?, sub_numbers = ? WHERE id = ?",
-    ).run(data.main_number, data.sub_type || "multi", subNumbersJson, id);
+    ).run(data.main_number, data.sub_type || "cmcc_multi", subNumbersJson, id);
 
     const config = db
       .prepare("SELECT * FROM multi_sim_config WHERE id = ?")

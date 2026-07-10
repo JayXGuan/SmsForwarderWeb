@@ -4,6 +4,8 @@ import { useState } from "react";
 import Modal from "@/components/shared/Modal";
 import MultiSimConfigForm from "@/components/devices/MultiSimConfigForm";
 import type { MultiSimConfig } from "@/types";
+import { getSubNumberTypeName } from "@/lib/subNumberTypes";
+import { parseSubNumbers } from "@/lib/multiSimUtils";
 
 interface MultiSimConfigModalProps {
   isOpen: boolean;
@@ -94,10 +96,10 @@ export default function MultiSimConfigModal({
                       主号：{config.main_number}
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
-                      副号类型：{config.sub_type === "multi" ? "多号类型" : config.sub_type}
+                      副号类型：{getSubNumberTypeName(config.sub_type)}
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
-                      副号列表：{JSON.parse(config.sub_numbers).join("、")}
+                      副号列表：{parseSubNumbers(config.sub_numbers).join("、")}
                     </div>
                   </div>
                   <div className="flex gap-2">

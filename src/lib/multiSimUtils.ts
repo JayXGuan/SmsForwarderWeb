@@ -1,24 +1,9 @@
 import type { MultiSimConfig, SimInfo } from "@/types";
-
-/**
- * 格式化副号发送的目标号码
- *
- * 规则：12583 + 副号序号 + 原号码
- * 例如：使用副号1发给 13800138000，结果为 12583113800138000
- *
- * @param originalPhone - 原始目标号码
- * @param subIndex - 副号序号（1-based）
- * @returns 格式化后的号码
- */
-export function formatSubNumberPhone(
-  originalPhone: string,
-  subIndex: number,
-): string {
-  if (!originalPhone || subIndex < 1) {
-    return originalPhone;
-  }
-  return `12583${subIndex}${originalPhone}`;
-}
+import {
+  formatSubNumberPhone as formatByType,
+  getSubNumberFormatDescription,
+  SUB_NUMBER_TYPES,
+} from "./subNumberTypes";
 
 /**
  * 解析副号列表 JSON 字符串为数组
@@ -48,13 +33,11 @@ export function findMatchingMultiSimConfig(
   simNumber: string | undefined | null,
   configs: MultiSimConfig[],
 ): MultiSimConfig | null {
-    console.log('simNumber',simNumber,'configs',configs);
-    
   if (!simNumber || !configs || configs.length === 0) {
     return null;
   }
 
-  return configs.find((config) =>simNumber.includes(config.main_number)) || null;
+  return configs.find((config) => simNumber.includes(config.main_number)) || null;
 }
 
 /**
@@ -74,7 +57,6 @@ export function getSimNumber(
   extraSim1?: string,
   extraSim2?: string,
 ): string | null {
-    console.log('getSimNumber',simInfoList,simSlot,extraSim1,extraSim2);
   // 优先使用 extra_sim 配置
   if (simSlot === 1 && extraSim1) {
     return extraSim1;
@@ -110,4 +92,34 @@ export function checkSubNumberSupport(
 ): MultiSimConfig | null {
   const simNumber = getSimNumber(simInfoList, simSlot, extraSim1, extraSim2);
   return findMatchingMultiSimConfig(simNumber, configs);
+}
+
+/**
+ * 根据配置的副号类型格式化目标号码
+ *
+ * @param config - 单卡多副卡配置
+ * @param originalPhone - 原始目标号码
+ * @param subIndex - 副号序号（1-based）
+ * @returns 格式化后的号码
+ */
+export function formatSubNumberPhone(
+  config: MultiSimConfig,
+  originalPhone: string,
+  subIndex: number,
+): string {
+  return formatByType(config.sub_type, originalPhone, subIndex);
+}
+
+/**
+ * 获取配置的副号格式说明
+ *
+ * @param config - 单卡多副卡配置
+ * @param subIndex - 副号序号（1-based）
+ * @returns 格式说明文本
+ */
+export function getFormatDescription(
+  config: MultiSimConfig,
+  subIndex: number,
+): string {
+  return getSubNumberFormatDescription(config.sub_type, subIndex);
 }
