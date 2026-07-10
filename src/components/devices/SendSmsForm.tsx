@@ -110,8 +110,8 @@ export default function SendSmsForm({
 
       {/* 副号选择：当 SIM 卡匹配配置时显示 */}
       {matchedConfig && subNumberList.length > 0 && (
-        <div className="bg-blue-50 rounded-lg p-3">
-          <label className="block text-sm font-medium text-blue-700 mb-1">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             发送方式
           </label>
           <select
@@ -120,7 +120,7 @@ export default function SendSmsForm({
               const value = parseInt(e.target.value);
               setSelectedSubIndex(value === 0 ? null : value);
             }}
-            className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value={0}>使用主号 ({matchedConfig.main_number})</option>
             {subNumberList.map((sub, index) => (
@@ -130,8 +130,8 @@ export default function SendSmsForm({
             ))}
           </select>
           {selectedSubIndex !== null && (
-            <p className="text-xs text-blue-600 mt-2">
-              发送格式：12583{selectedSubIndex} + 目标号码
+            <p className="text-xs text-gray-500 mt-1.5">
+              目标号码将自动添加前缀 12583{selectedSubIndex}
             </p>
           )}
         </div>
